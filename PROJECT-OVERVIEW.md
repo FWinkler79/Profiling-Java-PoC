@@ -133,17 +133,22 @@ jfr print jfr-exports/jfr-export-*.jfr
 
 ## Monitored JFR Events (jfr-stream-app)
 
-The streaming application automatically captures:
+The streaming application automatically captures the following events. This list
+mirrors the settings in the root `jfr-config.jfc` file:
 
+- **jdk.ExecutionSample** - Method profiling (every 10 ms)
 - **jdk.CPULoad** - CPU usage (every 1 second)
-- **jdk.ThreadAllocationStatistics** - Thread memory allocation
-- **jdk.GarbageCollection** - GC events
-- **jdk.GCHeapSummary** - Heap statistics
-- **jdk.JavaMonitorEnter** - Monitor contention (>10ms)
-- **jdk.JavaMonitorWait** - Monitor waits (>10ms)
-- **jdk.ThreadStart/ThreadEnd** - Thread lifecycle
-- **jdk.ExceptionStatistics** - Exception metrics
-- **jdk.ClassLoadingStatistics** - Class loading metrics
+- **jdk.JavaThreadStatistics** - Thread statistics (every 1 second)
+- **jdk.GarbageCollection / YoungGarbageCollection / OldGarbageCollection** - GC events (threshold 0 ms)
+- **jdk.ObjectAllocationInNewTLAB / ObjectAllocationOutsideTLAB** - Allocation (with stack traces)
+- **jdk.ThreadStart** (with stack traces) **/ jdk.ThreadEnd** - Thread lifecycle
+- **jdk.JavaExceptionThrow** (threshold 0 ms) **/ jdk.JavaErrorThrow** - Exceptions and errors (with stack traces)
+- **jdk.FileRead / FileWrite / SocketRead / SocketWrite** - I/O (>10 ms threshold, with stack traces)
+- **jdk.ClassLoad** - Class loading (with stack traces)
+- **jdk.Compilation** - JIT compilation (>100 ms threshold)
+- **jdk.JavaMonitorEnter** - Monitor contention (>10 ms, with stack traces)
+- **jdk.ThreadPark** - Thread park/unpark (>10 ms, with stack traces)
+- **jdk.InitialEnvironmentVariable** - Environment variables (captured at recording start)
 
 ## Architecture Comparison
 

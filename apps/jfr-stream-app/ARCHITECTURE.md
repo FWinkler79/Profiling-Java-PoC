@@ -30,15 +30,19 @@
 │  │  └────────────────────────────────────────────┘  │           │
 │  │                                                   │           │
 │  │  Enabled Events:                                 │           │
+│  │  • jdk.ExecutionSample (every 10ms)             │           │
 │  │  • jdk.CPULoad (every 1s)                       │           │
-│  │  • jdk.ThreadAllocationStatistics (every 1s)    │           │
-│  │  • jdk.GarbageCollection                        │           │
-│  │  • jdk.GCHeapSummary                            │           │
-│  │  • jdk.JavaMonitorEnter (>10ms threshold)       │           │
-│  │  • jdk.JavaMonitorWait (>10ms threshold)        │           │
-│  │  • jdk.ThreadStart / ThreadEnd                  │           │
-│  │  • jdk.ExceptionStatistics (every 1s)           │           │
-│  │  • jdk.ClassLoadingStatistics (every 1s)        │           │
+│  │  • jdk.JavaThreadStatistics (every 1s)          │           │
+│  │  • jdk.Garbage/Young/OldGarbageCollection (0ms) │           │
+│  │  • jdk.ObjectAllocationIn/OutsideTLAB (stack)   │           │
+│  │  • jdk.ThreadStart (stack) / ThreadEnd          │           │
+│  │  • jdk.JavaException/JavaErrorThrow (stack)     │           │
+│  │  • jdk.File/SocketRead/Write (>10ms, stack)     │           │
+│  │  • jdk.ClassLoad (stack)                        │           │
+│  │  • jdk.Compilation (>100ms)                     │           │
+│  │  • jdk.JavaMonitorEnter (>10ms, stack)          │           │
+│  │  • jdk.ThreadPark (>10ms, stack)                │           │
+│  │  • jdk.InitialEnvironmentVariable               │           │
 │  └──────────────────────────────────────────────────┘           │
 │                                                                  │
 │  ┌──────────────────────────────────────────────────┐           │

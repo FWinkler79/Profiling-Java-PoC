@@ -117,4 +117,9 @@
     <setting name="stackTrace">true</setting>
   </event>
 
+  <!-- Environment -->
+  <event name="jdk.InitialEnvironmentVariable">
+    <setting name="enabled">true</setting>
+  </event>
+
 </configuration>

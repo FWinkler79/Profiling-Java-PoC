@@ -91,18 +91,30 @@ curl http://localhost:8081/api/jfr/health
 
 ## Monitored Events
 
-The application captures the following JFR event types:
+The application captures the following JFR event types. This list mirrors the
+settings in the root `jfr-config.jfc` file (keep the two in sync):
 
+- **jdk.ExecutionSample** - Method profiling (every 10 ms)
 - **jdk.CPULoad** - CPU usage (every 1 second)
-- **jdk.ThreadAllocationStatistics** - Thread memory allocation (every 1 second)
-- **jdk.GarbageCollection** - GC events
-- **jdk.GCHeapSummary** - Heap statistics
-- **jdk.JavaMonitorEnter** - Monitor contention (>10ms threshold)
-- **jdk.JavaMonitorWait** - Monitor wait events (>10ms threshold)
-- **jdk.ThreadStart** - Thread creation
+- **jdk.JavaThreadStatistics** - Thread statistics (every 1 second)
+- **jdk.GarbageCollection** - GC events (threshold 0 ms)
+- **jdk.YoungGarbageCollection** - Young-generation GC (threshold 0 ms)
+- **jdk.OldGarbageCollection** - Old-generation GC (threshold 0 ms)
+- **jdk.ObjectAllocationInNewTLAB** - Allocation inside a new TLAB (with stack traces)
+- **jdk.ObjectAllocationOutsideTLAB** - Allocation outside a TLAB (with stack traces)
+- **jdk.ThreadStart** - Thread creation (with stack traces)
 - **jdk.ThreadEnd** - Thread termination
-- **jdk.ExceptionStatistics** - Exception metrics (every 1 second)
-- **jdk.ClassLoadingStatistics** - Class loading metrics (every 1 second)
+- **jdk.JavaExceptionThrow** - Exceptions thrown (threshold 0 ms, with stack traces)
+- **jdk.JavaErrorThrow** - Errors thrown (with stack traces)
+- **jdk.FileRead** - File reads (>10 ms threshold, with stack traces)
+- **jdk.FileWrite** - File writes (>10 ms threshold, with stack traces)
+- **jdk.SocketRead** - Socket reads (>10 ms threshold, with stack traces)
+- **jdk.SocketWrite** - Socket writes (>10 ms threshold, with stack traces)
+- **jdk.ClassLoad** - Class loading (with stack traces)
+- **jdk.Compilation** - JIT compilation (>100 ms threshold)
+- **jdk.JavaMonitorEnter** - Monitor contention (>10 ms threshold, with stack traces)
+- **jdk.ThreadPark** - Thread park/unpark (>10 ms threshold, with stack traces)
+- **jdk.InitialEnvironmentVariable** - Environment variables (captured at recording start)
 
 ## Output Files
 

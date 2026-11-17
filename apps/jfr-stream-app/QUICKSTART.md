@@ -124,15 +124,19 @@ server.port=8081
 ## Key Features
 
 ### Monitored JFR Events
+Mirrors the root `jfr-config.jfc` settings:
+- Method profiling / Execution samples (every 10 ms)
 - CPU Load (every 1 second)
-- Thread Allocation Statistics
-- Garbage Collection events
-- GC Heap Summary
-- Monitor Contention (>10ms)
-- Monitor Waits (>10ms)
+- Thread statistics (every 1 second)
+- Garbage Collection (young / old, threshold 0 ms)
+- Object allocation (in/outside TLAB, with stack traces)
 - Thread Start/End
-- Exception Statistics
-- Class Loading Statistics
+- Exceptions and Errors thrown (with stack traces)
+- File and Socket I/O (>10 ms, with stack traces)
+- Class loading (with stack traces)
+- JIT compilation (>100 ms)
+- Monitor contention and thread park (>10 ms, with stack traces)
+- Environment variables (captured at recording start)
 
 ### Automatic Export
 - Non-blocking: Recording continues while exporting

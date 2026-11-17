@@ -59,17 +59,53 @@ public class JfrStreamService {
             recording.setMaxAge(Duration.ofSeconds(maxAgeSeconds));
             recording.setToDisk(true);
 
-            // Enable common event types
+            // Enable event types to mirror the settings in the root jfr-config.jfc
+            // (keep this list in sync with that file).
+
+            // Method Profiling - sample every 10ms
+            recording.enable("jdk.ExecutionSample").withPeriod(Duration.ofMillis(10));
+
+            // CPU Load
             recording.enable("jdk.CPULoad").withPeriod(Duration.ofSeconds(1));
-            recording.enable("jdk.ThreadAllocationStatistics").withPeriod(Duration.ofSeconds(1));
-            recording.enable("jdk.GarbageCollection");
-            recording.enable("jdk.GCHeapSummary");
-            recording.enable("jdk.JavaMonitorEnter").withThreshold(Duration.ofMillis(10));
-            recording.enable("jdk.JavaMonitorWait").withThreshold(Duration.ofMillis(10));
-            recording.enable("jdk.ThreadStart");
+
+            // Thread Statistics
+            recording.enable("jdk.JavaThreadStatistics").withPeriod(Duration.ofSeconds(1));
+
+            // GC Events
+            recording.enable("jdk.GarbageCollection").withThreshold(Duration.ZERO);
+            recording.enable("jdk.YoungGarbageCollection").withThreshold(Duration.ZERO);
+            recording.enable("jdk.OldGarbageCollection").withThreshold(Duration.ZERO);
+
+            // Memory Allocation
+            recording.enable("jdk.ObjectAllocationInNewTLAB").withStackTrace();
+            recording.enable("jdk.ObjectAllocationOutsideTLAB").withStackTrace();
+
+            // Thread Events
+            recording.enable("jdk.ThreadStart").withStackTrace();
             recording.enable("jdk.ThreadEnd");
-            recording.enable("jdk.ExceptionStatistics").withPeriod(Duration.ofSeconds(1));
-            recording.enable("jdk.ClassLoadingStatistics").withPeriod(Duration.ofSeconds(1));
+
+            // Exception Events
+            recording.enable("jdk.JavaExceptionThrow").withThreshold(Duration.ZERO).withStackTrace();
+            recording.enable("jdk.JavaErrorThrow").withStackTrace();
+
+            // I/O Events
+            recording.enable("jdk.FileRead").withThreshold(Duration.ofMillis(10)).withStackTrace();
+            recording.enable("jdk.FileWrite").withThreshold(Duration.ofMillis(10)).withStackTrace();
+            recording.enable("jdk.SocketRead").withThreshold(Duration.ofMillis(10)).withStackTrace();
+            recording.enable("jdk.SocketWrite").withThreshold(Duration.ofMillis(10)).withStackTrace();
+
+            // Class Loading
+            recording.enable("jdk.ClassLoad").withStackTrace();
+
+            // Compilation
+            recording.enable("jdk.Compilation").withThreshold(Duration.ofMillis(100));
+
+            // Monitor Events
+            recording.enable("jdk.JavaMonitorEnter").withThreshold(Duration.ofMillis(10)).withStackTrace();
+            recording.enable("jdk.ThreadPark").withThreshold(Duration.ofMillis(10)).withStackTrace();
+
+            // Environment
+            recording.enable("jdk.InitialEnvironmentVariable");
 
             recording.start();
             logger.info("JFR continuous recording started - exporting every {} seconds", exportIntervalSeconds);
