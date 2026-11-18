@@ -9,7 +9,9 @@ import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.common.InstrumentationScopeInfo;
 import io.opentelemetry.sdk.profiles.ProfileExporter;
 import io.opentelemetry.sdk.profiles.data.ProfileData;
+import io.opentelemetry.sdk.profiles.data.ProfilesDictionaryData;
 import io.opentelemetry.sdk.profiles.data.SampleData;
+import io.opentelemetry.sdk.profiles.data.ValueTypeData;
 import io.opentelemetry.sdk.resources.Resource;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -185,30 +187,33 @@ public class JfrProfilesExportService {
    *
    * <p><strong>Drain race.</strong> The atomic swap installs a fresh converter, but a JFR callback
    * thread that fetched the <em>old</em> reference before the swap may still be inside {@code
-   * drained.accept(e)} after we begin reading {@code drained} here. {@code SampleCompositionBuilder}
-   * is backed by a plain non-concurrent {@link java.util.HashMap}, so a concurrent writer + our
-   * reader could throw {@link java.util.ConcurrentModificationException} or corrupt state. We close
-   * the race two ways: (1) a short settle sleep after the swap lets in-flight callbacks finish, and
-   * (2) {@link #drainSamplesDefensively} reads the samples with a retry so a transient CME cannot
-   * escape this scheduled method.
+   * drained.accept(e)} after we begin reading {@code drained} here. The converter's sample builder
+   * and dictionary are backed by plain non-concurrent {@link java.util.HashMap}s, so a concurrent
+   * writer while we read/mutate them could throw {@link java.util.ConcurrentModificationException} or
+   * silently corrupt the exported profile. We close the race by construction: after the swap we (1)
+   * settle-sleep to let in-flight callbacks finish, then (2) snapshot EVERYTHING we need from the
+   * drained converter exactly once, inside one guarded block ({@link #snapshotDrained}) — the samples
+   * copy, the resolved (samples,count) value type, and the dictionary data. After that snapshot the
+   * live drained converter is never touched again; {@link ProfileAssembler#assemble} consumes only
+   * the materialized snapshot. A persistent CME causes the interval to be skipped, not thrown.
    */
   @Scheduled(fixedDelayString = "${jfr.export.interval.seconds:15}000", initialDelay = 30000)
   public void exportInterval() {
     JfrExecutionSampleEventConverter drained = swapConverter();
 
     // Let any JFR callback still inside drained.accept(e) (it read the old ref before the swap)
-    // finish before we read the drained converter's non-concurrent sample map.
+    // finish before we read the drained converter's non-concurrent maps.
     settleAfterSwap();
 
-    List<SampleData> samples = drainSamplesDefensively(drained);
-    if (samples == null) {
+    DrainedSnapshot snapshot = snapshotDrained(drained);
+    if (snapshot == null) {
       // Persistent concurrent-modification failure; count it and skip this window rather than throw.
       failedExports.incrementAndGet();
       logger.warn("Skipping interval: could not safely drain converter samples");
       return;
     }
 
-    int sampleCount = samples.size();
+    int sampleCount = snapshot.samples().size();
     if (sampleCount == 0) {
       logger.debug("No ExecutionSamples in this interval; skipping export");
       return;
@@ -231,7 +236,9 @@ public class JfrProfilesExportService {
 
       ProfileData profile =
           ProfileAssembler.assemble(
-              drained,
+              snapshot.dictionary(),
+              snapshot.valueType(),
+              snapshot.samples(),
               resource,
               scope,
               startEpochNanos,
@@ -265,25 +272,43 @@ public class JfrProfilesExportService {
     }
   }
 
+  /** All data materialized from the drained converter in a single guarded pass. */
+  private record DrainedSnapshot(
+      List<SampleData> samples, ValueTypeData valueType, ProfilesDictionaryData dictionary) {}
+
   /**
-   * Reads the drained converter's samples, tolerating a transient {@link
-   * ConcurrentModificationException} caused by a JFR callback still finishing {@code accept()}. Tries
-   * once, then after a brief pause tries again. Returns {@code null} only on a persistent failure, so
-   * the caller can skip the interval instead of letting the exception escape.
+   * Materializes everything {@link ProfileAssembler} needs from the drained converter in ONE pass,
+   * so the live converter is touched exactly once. Order matters: the "samples"/"count" dictionary
+   * strings are resolved (which mutates the dictionary) <em>before</em> the dictionary data is
+   * captured, so they are present in the snapshot. Tolerates a transient {@link
+   * ConcurrentModificationException} from a JFR callback still finishing {@code accept()} by retrying
+   * once after a brief pause; returns {@code null} only on a persistent failure so the caller can
+   * skip the interval instead of letting the exception (or a corrupt snapshot) escape.
    */
-  private List<SampleData> drainSamplesDefensively(JfrExecutionSampleEventConverter drained) {
+  private DrainedSnapshot snapshotDrained(JfrExecutionSampleEventConverter drained) {
     try {
-      return List.copyOf(drained.getSamples());
+      return materialize(drained);
     } catch (ConcurrentModificationException first) {
       logger.debug("Converter drain hit ConcurrentModificationException; retrying once", first);
       settleAfterSwap();
       try {
-        return List.copyOf(drained.getSamples());
+        return materialize(drained);
       } catch (ConcurrentModificationException second) {
         logger.warn("Converter drain still failing after retry; skipping interval", second);
         return null;
       }
     }
+  }
+
+  /** Single-pass read of the drained converter. Any concurrent write surfaces as a CME here. */
+  private static DrainedSnapshot materialize(JfrExecutionSampleEventConverter drained) {
+    int samplesIdx = drained.getProfilesDictionaryCompositor().putIfAbsent("samples");
+    int countIdx = drained.getProfilesDictionaryCompositor().putIfAbsent("count");
+    ValueTypeData valueType = ValueTypeData.create(samplesIdx, countIdx);
+    ProfilesDictionaryData dictionary =
+        drained.getProfilesDictionaryCompositor().getProfileDictionaryData();
+    List<SampleData> samples = List.copyOf(drained.getSamples());
+    return new DrainedSnapshot(samples, valueType, dictionary);
   }
 
   /** Sleeps briefly to let in-flight JFR callbacks drain; swallows interruption. */

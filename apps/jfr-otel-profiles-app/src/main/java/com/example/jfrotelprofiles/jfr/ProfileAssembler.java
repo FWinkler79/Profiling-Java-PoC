@@ -8,16 +8,24 @@ package com.example.jfrotelprofiles.jfr;
 import io.opentelemetry.sdk.common.InstrumentationScopeInfo;
 import io.opentelemetry.sdk.profiles.data.ProfileData;
 import io.opentelemetry.sdk.profiles.data.ProfilesDictionaryData;
+import io.opentelemetry.sdk.profiles.data.SampleData;
 import io.opentelemetry.sdk.profiles.data.ValueTypeData;
 import io.opentelemetry.sdk.resources.Resource;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.HexFormat;
+import java.util.List;
 
 /**
- * Assembles a complete {@link ProfileData} from a populated {@link JfrExecutionSampleEventConverter}
- * and associated metadata.
+ * Assembles a complete {@link ProfileData} from already-materialized profile data and associated
+ * metadata.
+ *
+ * <p>This class is deliberately decoupled from {@link JfrExecutionSampleEventConverter}: it never
+ * reads or mutates a live converter. The caller is responsible for snapshotting the samples,
+ * dictionary, and value type from the converter (e.g. once, under a concurrency guard) and passing
+ * them in. This removes any possibility of a concurrent JFR callback mutating the converter's
+ * non-concurrent backing maps while the profile is being assembled.
  *
  * <p>Each call generates a fresh, random 32-character lowercase-hex {@code profileId}.
  */
@@ -28,10 +36,12 @@ public final class ProfileAssembler {
   private ProfileAssembler() {}
 
   /**
-   * Builds a {@link ProfileData} from the converter's accumulated samples and dictionary, plus the
+   * Builds a {@link ProfileData} from pre-materialized samples and dictionary data, plus the
    * supplied timing and payload metadata.
    *
-   * @param converter the populated converter whose samples and dictionary are used
+   * @param dictionary the profiles dictionary snapshot (already includes the sample/count strings)
+   * @param valueType the resolved (samples, count) value type, reused for both sample and period type
+   * @param samples the materialized, defensively-copied list of samples
    * @param resource the OTel {@link Resource} to attach to the profile
    * @param scope the {@link InstrumentationScopeInfo} to attach to the profile
    * @param startEpochNanos the profile's start timestamp in epoch nanoseconds
@@ -41,25 +51,15 @@ public final class ProfileAssembler {
    * @return a fully assembled {@link ProfileData}
    */
   public static ProfileData assemble(
-      JfrExecutionSampleEventConverter converter,
+      ProfilesDictionaryData dictionary,
+      ValueTypeData valueType,
+      List<SampleData> samples,
       Resource resource,
       InstrumentationScopeInfo scope,
       long startEpochNanos,
       long durationNanos,
       long periodNanos,
       byte[] rawJfrBytes) {
-
-    // Resolve "samples" and "count" string indices in the shared dictionary.
-    int samplesIdx = converter.getProfilesDictionaryCompositor().putIfAbsent("samples");
-    int countIdx = converter.getProfilesDictionaryCompositor().putIfAbsent("count");
-
-    ValueTypeData sampleType = ValueTypeData.create(samplesIdx, countIdx);
-
-    // For periodType reuse the same (samples, count) value type as the shim does.
-    ValueTypeData periodType = ValueTypeData.create(samplesIdx, countIdx);
-
-    ProfilesDictionaryData dictionary =
-        converter.getProfilesDictionaryCompositor().getProfileDictionaryData();
 
     // Generate a fresh random 32-char lowercase-hex profileId (16 random bytes).
     byte[] idBytes = new byte[16];
@@ -70,11 +70,11 @@ public final class ProfileAssembler {
         resource,
         scope,
         dictionary,
-        sampleType,
-        converter.getSamples(),
+        valueType,
+        samples,
         startEpochNanos,
         durationNanos,
-        periodType,
+        /* periodType= */ valueType,
         periodNanos,
         profileId,
         /* droppedAttributesCount= */ 0,
