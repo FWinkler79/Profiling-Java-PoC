@@ -165,4 +165,4 @@ curl http://localhost:8082/api/jfr/status
 
 - Explore profiles in devfiler or Grafana Pyroscope
 - Adjust the export interval and sample period in `application.yaml`
-- Compare with `jfr-stream-based-otel-app` which exports the same JFR data as OTLP logs
+- Compare with `jfr-otel-logs-app` which exports the same JFR data as OTLP logs

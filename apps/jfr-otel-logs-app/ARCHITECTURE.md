@@ -1,8 +1,8 @@
-# Architecture: JFR Stream-Based OTLP Application
+# Architecture: JFR OpenTelemetry Logs Application
 
 ## Overview
 
-This document describes the architecture of the JFR Stream-Based OTLP application, which continuously records Java Flight Recorder (JFR) events and exports them to OpenTelemetry Protocol (OTLP) backends.
+This document describes the architecture of the JFR OpenTelemetry Logs application, which continuously records Java Flight Recorder (JFR) events and exports them to OpenTelemetry Protocol (OTLP) backends.
 
 ## System Architecture
 

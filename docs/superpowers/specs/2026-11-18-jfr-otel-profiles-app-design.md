@@ -10,14 +10,14 @@ converts JFR events into the **OTLP profiles signal** (the pprof-style Function/
 dictionary encoding) and exports them with `OtlpGrpcProfileExporter`. The user wants that mapping reproduced in this
 repository.
 
-The existing `jfr-stream-based-otel-app` maps JFR events to **OTLP logs** (one log record per event). That is a
+The existing `jfr-otel-logs-app` maps JFR events to **OTLP logs** (one log record per event). That is a
 different signal and is explicitly a stopgap — its own source comments say to switch to the profiles signal once the
 JFR profiles support is released. It now is (alpha, on Maven Central). Rather than convert the working logs app, we
 build a **new** app so the logs app stays intact for comparison.
 
 ## Goals
 
-- A new Spring Boot app `apps/jfr-otel-profiles-app`, copied from `jfr-stream-based-otel-app`.
+- A new Spring Boot app `apps/jfr-otel-profiles-app`, copied from `jfr-otel-logs-app`.
 - Faithfully reproduce the shim's JFR→profiles mapping for `jdk.ExecutionSample`.
 - Export the resulting `ProfileData` over OTLP (gRPC) to a collector's `profiles` pipeline.
 - Provide a zero-setup way to verify the mapping end-to-end (collector `debug` exporter → stdout).
@@ -28,7 +28,7 @@ build a **new** app so the logs app stays intact for comparison.
 - Mapping any JFR event type other than `jdk.ExecutionSample` (decided with the user).
 - Exporting profiles to SAP Cloud Logging (left out unless the user later confirms it ingests profiles).
 - Production hardening of the alpha profiles signal.
-- Touching `jfr-stream-based-otel-app` or the shared root config in any functional way.
+- Touching `jfr-otel-logs-app` or the shared root config in any functional way.
 
 ## Anti-goals (would make this a failure even if it "works")
 
@@ -69,7 +69,7 @@ B honors the "stream-based" lineage and removes the dump/read cycle.
 ## How it works (the decided design)
 
 ### New app skeleton
-- Copy `apps/jfr-stream-based-otel-app` → `apps/jfr-otel-profiles-app`. New Maven `artifactId: jfr-otel-profiles-app`.
+- Copy `apps/jfr-otel-logs-app` → `apps/jfr-otel-profiles-app`. New Maven `artifactId: jfr-otel-profiles-app`.
 - Rename the base package `com.example.jfrotel` → `com.example.jfrotelprofiles` (keeps the two apps' classes distinct
   if ever on one classpath). Controllers/endpoints keep their paths (`/api/jfr/status`, `/health`).
 

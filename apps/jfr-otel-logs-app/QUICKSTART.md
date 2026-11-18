@@ -1,4 +1,4 @@
-# Quick Start: JFR Stream-Based OTLP Application
+# Quick Start: JFR OpenTelemetry Logs Application
 
 Get the JFR OTLP export application up and running in 5 minutes.
 
@@ -17,7 +17,7 @@ mvn -version
 ### Option A: Using Docker Compose (Easiest)
 
 ```bash
-cd apps/jfr-stream-based-otel-app/docker
+cd apps/jfr-otel-logs-app/docker
 ./start-collector.sh
 ```
 
@@ -47,7 +47,7 @@ jfr:
 ## Step 3: Run the Application
 
 ```bash
-cd apps/jfr-stream-based-otel-app
+cd apps/jfr-otel-logs-app
 ./run.sh
 ```
 

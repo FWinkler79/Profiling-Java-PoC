@@ -19,7 +19,7 @@ Maven, Docker Compose, otel/opentelemetry-collector-contrib:0.165.0.
 
 ## Global Constraints
 
-- New app lives at `apps/jfr-otel-profiles-app`; **do not modify** `apps/jfr-stream-based-otel-app` or shared root config.
+- New app lives at `apps/jfr-otel-profiles-app`; **do not modify** `apps/jfr-otel-logs-app` or shared root config.
 - Maven `artifactId: jfr-otel-profiles-app`, `version: 1.0.0`, `groupId: com.example`.
 - Base Java package: `com.example.jfrotelprofiles` (distinct from the logs app's `com.example.jfrotel`).
 - OTel core version: **1.68.0**. Profiles artifacts: **1.68.0-alpha** (`opentelemetry-sdk-profiles`,
@@ -66,7 +66,7 @@ Maven, Docker Compose, otel/opentelemetry-collector-contrib:0.165.0.
 ## Task 1: Scaffold the new app (copy, rename, repackage, build)
 
 **Files:**
-- Create (copy): entire `apps/jfr-stream-based-otel-app/` → `apps/jfr-otel-profiles-app/`
+- Create (copy): entire `apps/jfr-otel-logs-app/` → `apps/jfr-otel-profiles-app/`
 - Modify: `apps/jfr-otel-profiles-app/pom.xml` (artifactId, name, description, OTel version, profiles deps)
 - Modify: move `src/main/java/com/example/jfrotel/**` → `src/main/java/com/example/jfrotelprofiles/**`, update
   `package`/imports, rename `JfrOtelApplication` → `JfrProfilesApplication`
@@ -76,7 +76,7 @@ Maven, Docker Compose, otel/opentelemetry-collector-contrib:0.165.0.
 - Produces: a compiling Spring Boot app with the profiles dependencies on the classpath and the renamed package, but
   still carrying the old logs-based service (removed in Task 3).
 
-- [ ] **Step 1: Copy the app directory** — `cp -R apps/jfr-stream-based-otel-app apps/jfr-otel-profiles-app`, then
+- [ ] **Step 1: Copy the app directory** — `cp -R apps/jfr-otel-logs-app apps/jfr-otel-profiles-app`, then
   remove any copied `target/` and `docker/certs/`, `docker/.env`.
 - [ ] **Step 2: Edit `pom.xml`** — set `artifactId` to `jfr-otel-profiles-app`, update `<name>`/`<description>` to the
   profiles app, set `opentelemetry.version` to `1.68.0`, add `opentelemetry-sdk-profiles` and

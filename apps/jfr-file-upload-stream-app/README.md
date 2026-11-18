@@ -68,7 +68,7 @@ backend's HTTP ingest API. Simple, correct, no protocol mismatch.
 
 The [OpenTelemetry Profiles signal](https://opentelemetry.io/docs/specs/otel/profiles/) is the purpose-built OTLP
 signal for profiling data. It is still experimental, but it is exactly the right abstraction — profiling data
-belongs in a profile, not in a log. The `jfr-stream-based-otel-app` in this project pursues that path.
+belongs in a profile, not in a log. The `jfr-otel-logs-app` in this project pursues that path.
 
 ## Architecture
 
@@ -255,7 +255,7 @@ Look for `total_exports` incrementing. If it stays at 0, check application logs 
 - [docker/README.md](docker/README.md) — Collector setup and the SAP Cloud Logging failure in detail
 - [Main Project README](../../README.md)
 - [PROJECT-OVERVIEW.md](../../PROJECT-OVERVIEW.md)
-- [jfr-stream-based-otel-app](../jfr-stream-based-otel-app/README.md) — The correct OTel Profiles approach
+- [jfr-otel-logs-app](../jfr-otel-logs-app/README.md) — The correct OTel Profiles approach
 - [OpenTelemetry Profiles Specification](https://opentelemetry.io/docs/specs/otel/profiles/)
 
 ## License

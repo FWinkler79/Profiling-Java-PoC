@@ -6,7 +6,7 @@ A Spring Boot application, **`jfr-otel-profiles-app`**, that reproduces the Open
 `opentelemetry-jfr-profiles-shim` approach: record `jdk.ExecutionSample` JFR events and export them as
 the **OTLP profiles signal** (pprof-style `ProfileData`, dictionary-encoded).
 
-This app is a sibling of `jfr-stream-based-otel-app` (which exports JFR data as OTLP *logs*).
+This app is a sibling of `jfr-otel-logs-app` (which exports JFR data as OTLP *logs*).
 
 ### Location
 
@@ -134,7 +134,7 @@ command:
 
 ### Port
 
-**8082** (same as the sibling `jfr-stream-based-otel-app`)
+**8082** (same as the sibling `jfr-otel-logs-app`)
 
 ### Key Config Keys
 
@@ -159,9 +159,9 @@ command:
 }
 ```
 
-## How It Differs from jfr-stream-based-otel-app
+## How It Differs from jfr-otel-logs-app
 
-| Aspect          | jfr-stream-based-otel-app          | jfr-otel-profiles-app                         |
+| Aspect          | jfr-otel-logs-app          | jfr-otel-profiles-app                         |
 | --------------- | ---------------------------------- | --------------------------------------------- |
 | **Signal**      | OTLP Logs                          | OTLP Profiles                                 |
 | **Events**      | ~20 JFR event types                | `jdk.ExecutionSample` only                    |

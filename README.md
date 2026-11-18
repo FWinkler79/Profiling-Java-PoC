@@ -10,7 +10,7 @@ to use JFR for performance monitoring and profiling:
 
 1. **jfr-profiler-based-app** - Traditional JFR approach using external tools
 2. **jfr-jdk-api-based-app** - Programmatic JFR with continuous streaming to files
-3. **jfr-stream-based-otel-app** - Programmatic JFR with OTLP export (no files)
+3. **jfr-otel-logs-app** - Programmatic JFR with OTLP export (no files)
 
 ## Project Structure
 
@@ -35,7 +35,7 @@ JFR-Test/
 │   │   ├── README.md        # Detailed documentation
 │   │   └── ARCHITECTURE.md  # Architecture details
 │   │
-│   └── jfr-stream-based-otel-app/  # OTLP Export (port 8082)
+│   └── jfr-otel-logs-app/  # OTLP Export (port 8082)
 │       ├── src/             # Spring Boot application
 │       ├── pom.xml          # Maven configuration
 │       ├── run.sh           # Start script
@@ -50,7 +50,7 @@ JFR-Test/
 >
 > - **jfr-profiler-based-app**: Manual JFR files via jcmd
 > - **jfr-jdk-api-based-app**: Automatic exports to `jfr-exports/`, merged to `jfr-merged/`
-> - **jfr-stream-based-otel-app**: No files, streams to OTLP backend
+> - **jfr-otel-logs-app**: No files, streams to OTLP backend
 > Both file-based apps write to directories that are generated at runtime and git-ignored.
 
 ## Quick Start
@@ -67,7 +67,7 @@ The menu provides:
 
 - **Options 1-6**: jfr-profiler-based-app (traditional JFR, port 8080)
 - **Options 7-11**: jfr-jdk-api-based-app (streaming to files, port 8081)
-- **Options 12-17**: jfr-stream-based-otel-app (OTLP streaming, port 8082)
+- **Options 12-17**: jfr-otel-logs-app (OTLP streaming, port 8082)
 - **Options 18-20**: Shared tools (visualization, configuration, cleanup)
 
 See [MENU.md](MENU.md) for detailed menu documentation.
@@ -100,15 +100,15 @@ curl http://localhost:8081/api/jfr/status
 ls -lh jfr-exports/
 ```
 
-#### Option 3: OTLP Export (jfr-stream-based-otel-app)
+#### Option 3: OTLP Export (jfr-otel-logs-app)
 
 ```bash
 # Start OTLP Collector with Docker Compose
-cd apps/jfr-stream-based-otel-app/docker
+cd apps/jfr-otel-logs-app/docker
 ./start-collector.sh
 
 # In another terminal
-cd apps/jfr-stream-based-otel-app
+cd apps/jfr-otel-logs-app
 ./run.sh
 
 # Check status
@@ -121,7 +121,7 @@ docker-compose logs -f
 
 ## Applications Comparison
 
-| Feature | jfr-profiler-based-app | jfr-jdk-api-based-app | jfr-stream-based-otel-app |
+| Feature | jfr-profiler-based-app | jfr-jdk-api-based-app | jfr-otel-logs-app |
 | --------- | ------------------- | ---------------- | --------------------------- |
 | **Port** | 8080 | 8081 | 8082 |
 | **JFR Control** | External tools | Programmatic API | Programmatic API |
@@ -149,7 +149,7 @@ docker-compose logs -f
 ✅ Rolling 15-second event buffer  
 ✅ Perfect for production monitoring  
 
-### jfr-stream-based-otel-app
+### jfr-otel-logs-app
 
 ✅ Continuous JFR recording  
 ✅ OpenTelemetry Profile Signal export  
@@ -175,8 +175,8 @@ mvn clean package
 cd ../jfr-jdk-api-based-app
 mvn clean package
 
-# Build jfr-stream-based-otel-app
-cd ../jfr-stream-based-otel-app
+# Build jfr-otel-logs-app
+cd ../jfr-otel-logs-app
 mvn clean package
 ```
 
@@ -194,7 +194,7 @@ cd apps/jfr-jdk-api-based-app
 ./run.sh
 
 # Terminal 3 (after starting an OTLP backend)
-cd apps/jfr-stream-based-otel-app
+cd apps/jfr-otel-logs-app
 ./run.sh
 ```
 
@@ -225,7 +225,7 @@ jfr print --json recording.jfr > events.json
 2. Open the `.jfr` file
 3. Explore the various analysis tabs
 
-### For jfr-stream-based-otel-app
+### For jfr-otel-logs-app
 
 Profiles are exported to the OTLP backend and can be viewed in:
 
@@ -240,8 +240,8 @@ Profiles are exported to the OTLP backend and can be viewed in:
 - **[apps/jfr-profiler-based-app/README.md](apps/jfr-profiler-based-app/README.md)** - Traditional JFR documentation
 - **[apps/jfr-jdk-api-based-app/README.md](apps/jfr-jdk-api-based-app/README.md)** - Streaming JFR documentation
 - **[apps/jfr-jdk-api-based-app/ARCHITECTURE.md](apps/jfr-jdk-api-based-app/ARCHITECTURE.md)** - Architecture diagrams
-- **[apps/jfr-stream-based-otel-app/README.md](apps/jfr-stream-based-otel-app/README.md)** - OTLP export documentation
-- **[apps/jfr-stream-based-otel-app/QUICKSTART.md](apps/jfr-stream-based-otel-app/QUICKSTART.md)** - Quick start guide
+- **[apps/jfr-otel-logs-app/README.md](apps/jfr-otel-logs-app/README.md)** - OTLP export documentation
+- **[apps/jfr-otel-logs-app/QUICKSTART.md](apps/jfr-otel-logs-app/QUICKSTART.md)** - Quick start guide
 
 ## Use Cases
 
@@ -260,7 +260,7 @@ Profiles are exported to the OTLP backend and can be viewed in:
 - Integrating with monitoring pipelines
 - Analyzing profiles locally with JMC
 
-### Use jfr-stream-based-otel-app when
+### Use jfr-otel-logs-app when
 
 - Integrating with OpenTelemetry infrastructure
 - Using OTLP-compatible APM systems
@@ -280,7 +280,7 @@ Profiles are exported to the OTLP backend and can be viewed in:
 - `GET /api/jfr/status` - JFR recording status and statistics
 - `GET /api/jfr/health` - Health check
 
-### jfr-stream-based-otel-app (port 8082)
+### jfr-otel-logs-app (port 8082)
 
 - `GET /api/jfr/status` - JFR recording and OTLP export status
 - `GET /api/jfr/health` - Health check
@@ -291,7 +291,7 @@ Applications can be configured via their respective `application.yaml` files:
 
 - **jfr-profiler-based-app**: Basic Spring Boot settings  
 - **jfr-jdk-api-based-app**: JFR export directory, intervals, buffer size
-- **jfr-stream-based-otel-app**: OTLP endpoint, export intervals, instrumentation scope
+- **jfr-otel-logs-app**: OTLP endpoint, export intervals, instrumentation scope
 
 See individual README files for details.
 
@@ -303,7 +303,7 @@ Change ports in `application.yaml`:
 
 - jfr-profiler-based-app: default 8080
 - jfr-jdk-api-based-app: default 8081
-- jfr-stream-based-otel-app: default 8082
+- jfr-otel-logs-app: default 8082
 
 ### JFR not available
 
@@ -327,7 +327,7 @@ JFR is designed for production use with minimal overhead:
 
 - Typical overhead: <2% CPU
 - jfr-jdk-api-based-app export overhead: ~100-200ms every 15 seconds
-- jfr-stream-based-otel-app export overhead: ~200-500ms every 15 seconds (includes network)
+- jfr-otel-logs-app export overhead: ~200-500ms every 15 seconds (includes network)
 
 ## Contributing
 

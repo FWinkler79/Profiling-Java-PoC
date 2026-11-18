@@ -53,7 +53,7 @@ The collector listens on:
 In another terminal:
 
 ```bash
-cd ..  # Back to the jfr-stream-based-otel-app directory
+cd ..  # Back to the jfr-otel-logs-app directory
 ./run.sh
 ```
 

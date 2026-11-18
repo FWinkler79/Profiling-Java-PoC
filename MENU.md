@@ -12,7 +12,7 @@ The menu is organized into four sections:
 
 1. **jfr-profiler-based-app** (options 1-6) - Traditional JFR approach
 2. **jfr-jdk-api-based-app** (options 7-11) - Streaming to local files
-3. **jfr-stream-based-otel-app** (options 12-17) - Streaming to OTLP collector
+3. **jfr-otel-logs-app** (options 12-17) - Streaming to OTLP collector
 4. **Shared tools** (options 18-20) - Common utilities
 
 ## Menu Options
@@ -112,14 +112,14 @@ Assembles all `.jfr` files in `apps/jfr-jdk-api-based-app/jfr-exports/` into a s
 - Uses `jfr assemble` command
 - Output saved to `apps/jfr-jdk-api-based-app/jfr-merged/`
 
-### jfr-stream-based-otel-app (OTLP streaming, port 8082)
+### jfr-otel-logs-app (OTLP streaming, port 8082)
 
-#### Option 12: Build jfr-stream-based-otel-app application
+#### Option 12: Build jfr-otel-logs-app application
 
 Compiles the application using Maven.
 
 ```bash
-cd apps/jfr-stream-based-otel-app
+cd apps/jfr-otel-logs-app
 mvn clean package -DskipTests
 ```
 
@@ -129,10 +129,10 @@ Launches OpenTelemetry Collector in Docker:
 
 - Listens on port 4317 (OTLP gRPC)
 - Configured to display received JFR profiling logs on console
-- Uses `apps/jfr-stream-based-otel-app/docker/start-collector.sh`
+- Uses `apps/jfr-otel-logs-app/docker/start-collector.sh`
 - Start this **before** running the app
 
-#### Option 14: Run jfr-stream-based-otel-app
+#### Option 14: Run jfr-otel-logs-app
 
 Starts the OTLP streaming application:
 
@@ -192,7 +192,7 @@ Interactive cleanup with confirmations for each:
 
 - `apps/jfr-profiler-based-app/target/` (Maven build artifacts)
 - `apps/jfr-jdk-api-based-app/target/` (Maven build artifacts)
-- `apps/jfr-stream-based-otel-app/target/` (Maven build artifacts)
+- `apps/jfr-otel-logs-app/target/` (Maven build artifacts)
 - `apps/jfr-profiler-based-app/jfr-exports/` (recorded snapshots)
 - `apps/jfr-profiler-based-app/jfr-merged/` (merged files)
 - `apps/jfr-jdk-api-based-app/jfr-exports/` (exported snapshots)
@@ -234,7 +234,7 @@ Exits the menu.
 ### Workflow 3: OTLP Streaming
 
 ```text
-1. Option 12 - Build jfr-stream-based-otel-app
+1. Option 12 - Build jfr-otel-logs-app
 2. Option 13 - Start OTLP Collector
 3. Option 14 - Run app (runs in foreground)
    - In another terminal: Option 15 (View collector logs)
@@ -315,8 +315,8 @@ The menu calls these scripts:
 - `./view-jfr.sh` - Option 18
 - `./apps/jfr-jdk-api-based-app/run.sh` - Option 8
 - `./apps/jfr-jdk-api-based-app/generate-load.sh` - Option 9
-- `./apps/jfr-stream-based-otel-app/run.sh` - Option 14
-- `./apps/jfr-stream-based-otel-app/docker/start-collector.sh` - Option 13
+- `./apps/jfr-otel-logs-app/run.sh` - Option 14
+- `./apps/jfr-otel-logs-app/docker/start-collector.sh` - Option 13
 
 ## Docker Integration
 
@@ -324,9 +324,9 @@ Options 13, 15, and 17 use Docker Compose for the OTLP Collector:
 
 ### Files
 
-- `apps/jfr-stream-based-otel-app/docker/docker-compose.yaml` - Service definition
-- `apps/jfr-stream-based-otel-app/docker/otel-collector-config.yaml` - Pipeline configuration
-- `apps/jfr-stream-based-otel-app/docker/start-collector.sh` - Startup wrapper
+- `apps/jfr-otel-logs-app/docker/docker-compose.yaml` - Service definition
+- `apps/jfr-otel-logs-app/docker/otel-collector-config.yaml` - Pipeline configuration
+- `apps/jfr-otel-logs-app/docker/start-collector.sh` - Startup wrapper
 
 ### Ports Exposed
 
@@ -335,7 +335,7 @@ Options 13, 15, and 17 use Docker Compose for the OTLP Collector:
 - `8888` - Prometheus metrics
 - `13133` - Health check
 
-See [apps/jfr-stream-based-otel-app/docker/README.md](apps/jfr-stream-based-otel-app/docker/README.md) for details.
+See [apps/jfr-otel-logs-app/docker/README.md](apps/jfr-otel-logs-app/docker/README.md) for details.
 
 ## Troubleshooting
 
@@ -350,7 +350,7 @@ Another instance is running. Check:
 ```bash
 lsof -i :8080  # jfr-profiler-based-app
 lsof -i :8081  # jfr-jdk-api-based-app
-lsof -i :8082  # jfr-stream-based-otel-app
+lsof -i :8082  # jfr-otel-logs-app
 ```
 
 ### Docker errors (option 13)

@@ -5,7 +5,7 @@ A Spring Boot application that reproduces the OpenTelemetry
 approach: it records `jdk.ExecutionSample` JFR events via a live `RecordingStream` and exports them as the
 **OTLP profiles signal** (pprof-style dictionary-encoded Functions / Locations / Stacks / Samples).
 
-This is a sibling of `jfr-stream-based-otel-app`, which exports the same JFR data as OTLP *logs*. This app
+This is a sibling of `jfr-otel-logs-app`, which exports the same JFR data as OTLP *logs*. This app
 demonstrates the native profiles signal now available in OpenTelemetry.
 
 **Port:** 8082
@@ -197,7 +197,7 @@ This application records **only** `jdk.ExecutionSample` (CPU method-profiling / 
 
 This is intentionally narrow: the profiles signal is designed for stack-based profiling data, not general
 JVM telemetry. For broader JFR event coverage (CPU load, GC, I/O, exceptions, …) see the sibling app
-`jfr-stream-based-otel-app`.
+`jfr-otel-logs-app`.
 
 ## Building
 
@@ -221,7 +221,7 @@ java -jar target/jfr-otel-profiles-app-1.0.0.jar \
 
 ## Comparison with Other Apps
 
-| Feature             | jfr-stream-based-otel-app         | jfr-otel-profiles-app                         |
+| Feature             | jfr-otel-logs-app         | jfr-otel-profiles-app                         |
 | ------------------- | --------------------------------- | --------------------------------------------- |
 | **Port**            | 8082                              | 8082                                          |
 | **Signal**          | OTLP Logs                         | OTLP Profiles                                 |
@@ -287,7 +287,7 @@ OpenTelemetry releases.
 - [QUICKSTART.md](QUICKSTART.md) — 5-minute quick start
 - [ARCHITECTURE.md](ARCHITECTURE.md) — detailed architecture
 - [docker/README.md](docker/README.md) — Docker / Collector setup
-- [jfr-stream-based-otel-app](../jfr-stream-based-otel-app/README.md) — logs-signal sibling app
+- [jfr-otel-logs-app](../jfr-otel-logs-app/README.md) — logs-signal sibling app
 - [OpenTelemetry Profiles Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/profiles/profiles.md)
 
 ## License

@@ -1,4 +1,4 @@
-# JFR Stream-Based OpenTelemetry Application
+# JFR OpenTelemetry Logs Application
 
 A Spring Boot application that continuously streams Java Flight Recorder (JFR) events and exports them to an OpenTelemetry (OTLP) backend in real-time.
 
@@ -65,7 +65,7 @@ For testing, you can use:
 The easiest way to get started is using the included OpenTelemetry Collector:
 
 ```bash
-cd apps/jfr-stream-based-otel-app
+cd apps/jfr-otel-logs-app
 
 # Start the collector
 cd docker
@@ -104,7 +104,7 @@ jfr.otlp.endpoint=http://localhost:11000
 ### 3. Build and Run
 
 ```bash
-cd apps/jfr-stream-based-otel-app
+cd apps/jfr-otel-logs-app
 ./run.sh
 ```
 
@@ -203,16 +203,16 @@ mvn clean package
 ./run.sh
 
 # Or directly
-java -jar target/jfr-stream-based-otel-app-1.0.0.jar
+java -jar target/jfr-otel-logs-app-1.0.0.jar
 
 # With custom OTLP endpoint
-java -jar target/jfr-stream-based-otel-app-1.0.0.jar \
+java -jar target/jfr-otel-logs-app-1.0.0.jar \
   --jfr.otlp.endpoint=http://my-collector:4317
 ```
 
 ## Comparison with Other Apps
 
-| Feature | jfr-profiler-based-app | jfr-stream-app | jfr-stream-based-otel-app |
+| Feature | jfr-profiler-based-app | jfr-stream-app | jfr-otel-logs-app |
 |---------|-------------------|----------------|---------------------------|
 | **Port** | 8080 | 8081 | 8082 |
 | **JFR Control** | External tools | Programmatic | Programmatic |

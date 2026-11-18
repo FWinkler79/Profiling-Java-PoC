@@ -13,12 +13,12 @@
     </parent>
 
     <groupId>com.example</groupId>
-    <artifactId>jfr-stream-based-otel-app</artifactId>
+    <artifactId>jfr-otel-logs-app</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>JFR Stream-Based OpenTelemetry Application</name>
-    <description>Spring Boot app that continuously streams JFR events and exports them as OTLP profiles</description>
+    <name>JFR OpenTelemetry Logs Application</name>
+    <description>Spring Boot app that continuously streams JFR events and exports them as OTLP logs</description>
 
     <properties>
         <java.version>17</java.version>

@@ -20,4 +20,4 @@ echo "JFR profiles will be exported to the OTLP endpoint every 15 seconds"
 echo "Press Ctrl+C to stop"
 echo ""
 
-java -jar target/jfr-stream-based-otel-app-1.0.0.jar
+java -jar target/jfr-otel-logs-app-1.0.0.jar
