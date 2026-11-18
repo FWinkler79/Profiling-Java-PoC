@@ -4,13 +4,13 @@ This project contains two Spring Boot applications demonstrating different appro
 
 ## Project Structure
 
-```
+```text
 JFR-Test/
 ├── apps/
-│   ├── jfr-file-based-app/  # Traditional JFR approach (external tools)
+│   ├── jfr-profiler-based-app/  # Traditional JFR approach (external tools)
 │   │   ├── jfr-exports/     # Recorded snapshots (generated)
 │   │   └── jfr-merged/      # Merged recordings (generated)
-│   └── jfr-stream-app/      # Programmatic JFR with continuous streaming
+│   └── jfr-jdk-api-based-app/      # Programmatic JFR with continuous streaming
 │       ├── jfr-exports/     # Exported snapshots (generated)
 │       └── jfr-merged/      # Merged recordings (generated)
 ├── PROJECT-OVERVIEW.md      # This file
@@ -23,36 +23,42 @@ Each application keeps its JFR output within its own folder: raw recordings in
 ## Applications
 
 ### 1. JFR File-Based Application
-**Location**: `/Users/D056076/temp/JFR-Test/apps/jfr-file-based-app/`  
+
+**Location**: `/Users/D056076/temp/JFR-Test/apps/jfr-profiler-based-app/`  
 **Port**: 8080
 
 A basic Spring Boot application demonstrating traditional JFR profiling using external tools and JVM flags.
 
 **Key Characteristics**:
+
 - Manual JFR control via JVM flags, `jcmd`, or JMC
 - On-demand profiling sessions
 - Suitable for interactive analysis and troubleshooting
 
 **Running**:
+
 ```bash
-cd apps/jfr-file-based-app
+cd apps/jfr-profiler-based-app
 ./run.sh
 ```
 
 **Profiling Methods**:
+
 - JVM flags: `java -XX:StartFlightRecording=...`
 - jcmd: `jcmd <PID> JFR.start`
 - JDK Mission Control (JMC GUI)
 
 ---
 
-### 2. JFR Stream Application
-**Location**: `/Users/D056076/temp/JFR-Test/apps/jfr-stream-app/`  
+### 2. JFR JDK API Application
+
+**Location**: `/Users/D056076/temp/JFR-Test/apps/jfr-jdk-api-based-app/`  
 **Port**: 8081
 
 An advanced Spring Boot application using the `jdk.jfr` API for programmatic control.
 
 **Key Characteristics**:
+
 - Continuous JFR recording (starts automatically)
 - Periodic exports every 15 seconds
 - Rolling buffer (15-second window)
@@ -60,19 +66,21 @@ An advanced Spring Boot application using the `jdk.jfr` API for programmatic con
 - No external tools required
 
 **Running**:
+
 ```bash
-cd apps/jfr-stream-app
+cd apps/jfr-jdk-api-based-app
 ./run.sh
 ```
 
 **API Endpoints**:
+
 - Status: `http://localhost:8081/api/jfr/status`
 - Health: `http://localhost:8081/api/jfr/health`
 
 ## Feature Comparison
 
-| Feature | jfr-file-based-app | jfr-stream-app |
-|---------|--------------------|----------------|
+| Feature | jfr-profiler-based-app | jfr-jdk-api-based-app |
+| --------- | -------------------- | ---------------- |
 | **JFR Control** | External (JVM flags, jcmd, JMC) | Programmatic (jdk.jfr API) |
 | **Recording Start** | Manual or at JVM startup | Automatic on app startup |
 | **Continuous Recording** | Requires manual setup | Built-in |
@@ -86,15 +94,15 @@ cd apps/jfr-stream-app
 
 ## Quick Start Guide
 
-### Option 1: Traditional Profiling (jfr-file-based-app)
+### Option 1: Traditional Profiling (jfr-profiler-based-app)
 
 ```bash
 # Step 1: Start the application
-cd apps/jfr-file-based-app
+cd apps/jfr-profiler-based-app
 ./run.sh
 
 # Step 2: In another terminal, find the PID
-jps -l | grep jfr-test
+jps -l | grep jfr-profiler-based-app
 
 # Step 3: Start JFR recording
 jcmd <PID> JFR.start name=MyRecording settings=profile duration=60s
@@ -109,11 +117,11 @@ jcmd <PID> JFR.dump name=MyRecording filename=recording.jfr
 jfr print recording.jfr
 ```
 
-### Option 2: Continuous Streaming (jfr-stream-app)
+### Option 2: Continuous Streaming (jfr-jdk-api-based-app)
 
 ```bash
 # Step 1: Start the application
-cd apps/jfr-stream-app
+cd apps/jfr-jdk-api-based-app
 ./run.sh
 
 # Step 2: Verify it's running
@@ -131,7 +139,7 @@ ls -lh jfr-exports/
 jfr print jfr-exports/jfr-export-*.jfr
 ```
 
-## Monitored JFR Events (jfr-stream-app)
+## Monitored JFR Events (jfr-jdk-api-based-app)
 
 The streaming application automatically captures the following events. This list
 mirrors the settings in the root `jfr-config.jfc` file:
@@ -152,9 +160,9 @@ mirrors the settings in the root `jfr-config.jfc` file:
 
 ## Architecture Comparison
 
-### Traditional JFR Architecture (jfr-file-based-app)
+### Traditional JFR Architecture (jfr-profiler-based-app)
 
-```
+```text
 ┌─────────────────┐
 │   Application   │
 │   (Port 8080)   │
@@ -180,14 +188,14 @@ mirrors the settings in the root `jfr-config.jfc` file:
 └─────────────────┘
 ```
 
-### Programmatic JFR Architecture (jfr-stream-app)
+### Programmatic JFR Architecture (jfr-jdk-api-based-app)
 
-```
+```text
 ┌─────────────────────────────────┐
 │        Application              │
 │        (Port 8081)              │
 │  ┌───────────────────────────┐  │
-│  │  JfrStreamService         │  │
+│  │  JfrJdkApiService         │  │
 │  │  • Continuous recording   │  │
 │  │  • Scheduled exports      │  │
 │  │  • Rolling buffer (15s)   │  │
@@ -220,59 +228,66 @@ mirrors the settings in the root `jfr-config.jfc` file:
 
 ## Use Cases
 
-### When to Use jfr-file-based-app
+### When to Use jfr-profiler-based-app
 
 ✅ **One-time profiling sessions**
+
 - Investigating a specific performance issue
 - Analyzing application behavior during a particular operation
 - Deep-dive analysis with JMC GUI
 
 ✅ **Interactive analysis**
+
 - Comparing different scenarios
 - Manual control over recording timing
 - Working with existing JFR tools and workflows
 
 ✅ **Development and testing**
+
 - Profiling during development
 - Learning JFR concepts
 - Quick ad-hoc profiling
 
-### When to Use jfr-stream-app
+### When to Use jfr-jdk-api-based-app
 
 ✅ **Continuous monitoring**
+
 - Production environment monitoring
 - Always-on performance tracking
 - Historical performance analysis
 
 ✅ **Automated data collection**
+
 - Building custom APM systems
 - Integrating with monitoring pipelines
 - Exporting to external storage (S3, Elasticsearch, etc.)
 
 ✅ **Time-series analysis**
+
 - Tracking performance trends over time
 - Correlating with deployment events
 - Baseline performance tracking
 
 ✅ **Automated alerting**
+
 - Processing events in real-time
 - Triggering alerts on anomalies
 - Custom metric extraction
 
 ## Configuration
 
-### jfr-file-based-app Configuration
+### jfr-profiler-based-app Configuration
 
-Edit `apps/jfr-file-based-app/src/main/resources/application.properties`:
+Edit `apps/jfr-profiler-based-app/src/main/resources/application.properties`:
 
 ```properties
 server.port=8080
 spring.application.name=JFR Test Application
 ```
 
-### jfr-stream-app Configuration
+### jfr-jdk-api-based-app Configuration
 
-Edit `apps/jfr-stream-app/src/main/resources/application.properties`:
+Edit `apps/jfr-jdk-api-based-app/src/main/resources/application.properties`:
 
 ```properties
 # Server port
@@ -344,12 +359,14 @@ print(f"Average CPU: {avg_cpu:.2%}")
 
 ## Performance Considerations
 
-### jfr-file-based-app
+### jfr-profiler-based-app
+
 - JFR overhead: typically <2% CPU
 - No additional overhead from application code
 - File size depends on recording duration and event rate
 
-### jfr-stream-app
+### jfr-jdk-api-based-app
+
 - JFR overhead: typically <2% CPU
 - Export overhead: ~100-200ms every 15 seconds
 - Disk space: 1-5 MB per export (depends on activity)
@@ -359,13 +376,15 @@ print(f"Average CPU: {avg_cpu:.2%}")
 
 ### Port conflicts
 
-**jfr-file-based-app (port 8080)**:
+**jfr-profiler-based-app (port 8080)**:
+
 ```properties
 # Change in application.properties
 server.port=8082
 ```
 
-**jfr-stream-app (port 8081)**:
+**jfr-jdk-api-based-app (port 8081)**:
+
 ```properties
 # Change in application.properties
 server.port=8083
@@ -374,24 +393,27 @@ server.port=8083
 ### JFR not available
 
 Check JFR support:
+
 ```bash
 java -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal | grep FlightRecorder
 ```
 
 JFR is included by default in:
+
 - OpenJDK 11+
 - Oracle JDK 11+
 
 ### Build issues
 
 Clean and rebuild:
+
 ```bash
-# jfr-file-based-app
-cd apps/jfr-file-based-app
+# jfr-profiler-based-app
+cd apps/jfr-profiler-based-app
 mvn clean install
 
-# jfr-stream-app
-cd apps/jfr-stream-app
+# jfr-jdk-api-based-app
+cd apps/jfr-jdk-api-based-app
 mvn clean install
 ```
 
@@ -399,7 +421,7 @@ mvn clean install
 
 1. **Run both applications** to understand the differences
 2. **Compare the approaches** for your use case
-3. **Customize event types** in jfr-stream-app
+3. **Customize event types** in jfr-jdk-api-based-app
 4. **Integrate with monitoring** systems
 5. **Build custom analysis** tools
 

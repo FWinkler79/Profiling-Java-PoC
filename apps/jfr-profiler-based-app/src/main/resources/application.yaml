@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: jfr-test
+    name: jfr-profiler-based-app
 
 # Actuator endpoints
 management:

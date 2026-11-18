@@ -13,11 +13,11 @@
     </parent>
 
     <groupId>com.example</groupId>
-    <artifactId>jfr-test</artifactId>
+    <artifactId>jfr-profiler-based-app</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>JFR Test Application</name>
+    <name>JFR Profiler Based Application</name>
     <description>Spring Boot app with JFR profiling</description>
 
     <properties>

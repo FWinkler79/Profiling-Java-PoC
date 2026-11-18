@@ -127,4 +127,4 @@ This app is **production-ready** for streaming profiles to APM systems.
 
 For local analysis, use:
 - `jfr-stream-app` (exports to files)
-- `jfr-file-based-app` (manual profiling with jcmd)
+- `jfr-profiler-based-app` (manual profiling with jcmd)

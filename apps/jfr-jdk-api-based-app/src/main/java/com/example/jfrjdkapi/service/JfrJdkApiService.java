@@ -1,4 +1,4 @@
-package com.example.jfrstream.service;
+package com.example.jfrjdkapi.service;
 
 import jdk.jfr.Recording;
 import jdk.jfr.RecordingState;
@@ -27,9 +27,9 @@ import java.util.concurrent.atomic.AtomicLong;
  * Uses the JDK Flight Recorder API to create snapshots without stopping the application.
  */
 @Service
-public class JfrStreamService {
+public class JfrJdkApiService {
 
-    private static final Logger logger = LoggerFactory.getLogger(JfrStreamService.class);
+    private static final Logger logger = LoggerFactory.getLogger(JfrJdkApiService.class);
     private static final DateTimeFormatter FILENAME_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
 
     @Value("${jfr.export.directory:./jfr-exports}")

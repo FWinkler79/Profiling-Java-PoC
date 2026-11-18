@@ -1,6 +1,7 @@
-# JFR Stream Application
+# JFR JDK API Application
 
-A Spring Boot application that demonstrates continuous JFR (Java Flight Recorder) event streaming with periodic exports to files.
+A Spring Boot application that demonstrates continuous JFR (Java Flight Recorder) event streaming
+with periodic exports to files.
 
 ## Overview
 
@@ -30,7 +31,7 @@ This application uses the `jdk.jfr` API to create a continuous recording that:
 ### Build the application
 
 ```bash
-cd apps/jfr-stream-app
+cd apps/jfr-jdk-api-based-app
 mvn clean package
 ```
 
@@ -43,7 +44,7 @@ mvn spring-boot:run
 Or run the JAR directly:
 
 ```bash
-java -jar target/jfr-stream-app-1.0.0.jar
+java -jar target/jfr-jdk-api-based-app-1.0.0.jar
 ```
 
 ## Configuration
@@ -120,7 +121,7 @@ settings in the root `jfr-config.jfc` file (keep the two in sync):
 
 JFR files are exported to the configured directory (default: `./jfr-exports`) with filenames like:
 
-```
+```text
 jfr-export-20261116-143025-0001.jfr
 jfr-export-20261116-143055-0002.jfr
 jfr-export-20261116-143125-0003.jfr
@@ -148,7 +149,7 @@ jfr print --json jfr-export-20261116-143025-0001.jfr > events.json
 
 The application consists of:
 
-1. **JfrStreamService** - Core service that:
+1. **JfrJdkApiService** - Core service that:
    - Starts a continuous JFR recording on application startup
    - Periodically exports snapshots using `Recording.copy()`
    - Counts events in each export
@@ -158,11 +159,11 @@ The application consists of:
    - Status endpoint showing recording state and statistics
    - Health check endpoint
 
-3. **JfrStreamApplication** - Main Spring Boot application class with `@EnableScheduling`
+3. **JfrJdkApiApplication** - Main Spring Boot application class with `@EnableScheduling`
 
 ## How It Works
 
-1. On startup, `JfrStreamService` creates a `Recording` instance and enables various event types
+1. On startup, `JfrJdkApiService` creates a `Recording` instance and enables various event types
 2. The recording runs continuously with a rolling buffer (maxAge)
 3. Every N seconds (configurable), `@Scheduled` method calls `recording.copy()` to create a snapshot
 4. The snapshot is saved to a `.jfr` file without stopping the main recording
@@ -187,7 +188,7 @@ The application logs:
 
 Example log output:
 
-```
+```text
 2026-11-16 14:30:15 - JFR export directory: /Users/user/jfr-exports
 2026-11-16 14:30:15 - JFR continuous recording started - exporting every 15 seconds
 2026-11-16 14:30:45 - Exported JFR snapshot #1 to jfr-export-20261116-143045-0001.jfr (3214 events, 125 ms)
@@ -213,7 +214,8 @@ Example log output:
 
 ## Performance Impact
 
-JFR is designed for production use with minimal overhead (typically <2% CPU impact). The periodic exports add a small additional cost proportional to the number of events being processed.
+JFR is designed for production use with minimal overhead (typically <2% CPU impact).
+The periodic exports add a small additional cost proportional to the number of events being processed.
 
 ## License
 

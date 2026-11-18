@@ -5,6 +5,7 @@ A basic Spring Boot application demonstrating traditional JFR profiling approach
 ## Overview
 
 This is a simple Spring Boot web application that can be profiled using Java Flight Recorder (JFR) through traditional methods:
+
 - JVM command-line flags
 - JDK Mission Control (JMC)
 - `jcmd` command-line tool
@@ -32,7 +33,7 @@ mvn spring-boot:run
 Or run the JAR:
 
 ```bash
-java -jar target/jfr-test-1.0.0.jar
+java -jar target/jfr-profiler-based-app-1.0.0.jar
 ```
 
 The application starts on **port 8080**.
@@ -43,10 +44,11 @@ The application starts on **port 8080**.
 
 ```bash
 java -XX:StartFlightRecording=filename=recording.jfr,duration=60s,settings=profile \
-     -jar target/jfr-test-1.0.0.jar
+     -jar target/jfr-profiler-based-app-1.0.0.jar
 ```
 
 This will:
+
 - Start the application
 - Begin recording JFR events
 - Save to `recording.jfr` after 60 seconds
@@ -57,7 +59,7 @@ This will:
 First, find the process ID:
 
 ```bash
-jps -l | grep jfr-test
+jps -l | grep jfr-profiler-based-app
 ```
 
 Then start a recording:
@@ -89,11 +91,13 @@ jcmd <PID> JFR.stop name=MyRecording
 ## API Endpoints
 
 ### Hello Endpoint
+
 ```bash
 curl http://localhost:8080/api/hello
 ```
 
 Response:
+
 ```json
 {
   "message": "Hello from JFR Test Application!",
@@ -102,6 +106,7 @@ Response:
 ```
 
 ### Health Check (Actuator)
+
 ```bash
 curl http://localhost:8080/actuator/health
 ```
@@ -111,17 +116,20 @@ curl http://localhost:8080/actuator/health
 ### Using jfr command-line tool
 
 Print summary:
+
 ```bash
 jfr print recording.jfr
 ```
 
 Print specific events:
+
 ```bash
 jfr print --events jdk.CPULoad recording.jfr
 jfr print --events jdk.GarbageCollection recording.jfr
 ```
 
 Convert to JSON:
+
 ```bash
 jfr print --json recording.jfr > events.json
 ```
@@ -150,8 +158,8 @@ spring.application.name=JFR Test Application
 
 ## Project Structure
 
-```
-jfr-file-based-app/
+```text
+jfr-profiler-based-app/
 ├── src/
 │   └── main/
 │       ├── java/com/example/jfr/
@@ -170,10 +178,10 @@ JFR output stays within this folder: continuous-profiling snapshots are written
 to `jfr-exports/`, and merging them (menu option 4) produces a single file in
 `jfr-merged/`. Both folders are generated at runtime and git-ignored.
 
-## Comparison with jfr-stream-app
+## Comparison with jfr-jdk-api-based-app
 
-| Feature | jfr-file-based-app (this app) | jfr-stream-app |
-|---------|-------------------------------|----------------|
+| Feature | jfr-profiler-based-app (this app) | jfr-jdk-api-based-app |
+| --------- | ------------------------------- | ---------------- |
 | JFR Control | External (JVM flags, jcmd, JMC) | Programmatic (jdk.jfr API) |
 | Recording Start | Manual or at JVM startup | Automatic on app startup |
 | Continuous Recording | Requires manual setup | Built-in |
@@ -185,26 +193,32 @@ to `jfr-exports/`, and merging them (menu option 4) produces a single file in
 ## Use Cases
 
 This application is ideal for:
+
 - **One-time profiling sessions** - Start recording when needed
 - **Interactive analysis** - Use JMC for deep-dive investigation
 - **Learning JFR** - Understand basic JFR concepts
 - **Manual control** - Full control over when to record
 - **Traditional workflows** - Fits existing JFR tooling and processes
 
-For **continuous monitoring** with automatic exports, see the `jfr-stream-app` application.
+For **continuous monitoring** with automatic exports, see the `jfr-jdk-api-based-app` application.
 
 ## Troubleshooting
 
 ### Port 8080 already in use
+
 Change the port in `src/main/resources/application.properties`:
+
 ```properties
 server.port=8082
 ```
 
 ### JFR not available
-JFR is included by default in OpenJDK 11+ and Oracle JDK 11+. For older versions, it may require commercial features to be enabled.
+
+JFR is included by default in OpenJDK 11+ and Oracle JDK 11+.
+For older versions, it may require commercial features to be enabled.
 
 Check JFR availability:
+
 ```bash
 java -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal | grep FlightRecorder
 ```

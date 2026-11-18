@@ -1,21 +1,23 @@
 # JFR Test Project
 
-A comprehensive demonstration of Java Flight Recorder (JFR) usage in Spring Boot applications, showcasing both traditional and programmatic approaches.
+A comprehensive demonstration of Java Flight Recorder (JFR) usage in Spring Boot applications,
+showcasing both traditional and programmatic approaches.
 
 ## Overview
 
-This project contains **three Spring Boot applications** that demonstrate different ways to use JFR for performance monitoring and profiling:
+This project contains **three Spring Boot applications** that demonstrate different ways
+to use JFR for performance monitoring and profiling:
 
-1. **jfr-file-based-app** - Traditional JFR approach using external tools
-2. **jfr-stream-app** - Programmatic JFR with continuous streaming to files
+1. **jfr-profiler-based-app** - Traditional JFR approach using external tools
+2. **jfr-jdk-api-based-app** - Programmatic JFR with continuous streaming to files
 3. **jfr-stream-based-otel-app** - Programmatic JFR with OTLP export (no files)
 
 ## Project Structure
 
-```
+```text
 JFR-Test/
 ├── apps/
-│   ├── jfr-file-based-app/  # Traditional JFR (port 8080)
+│   ├── jfr-profiler-based-app/  # Traditional JFR (port 8080)
 │   │   ├── src/             # Spring Boot application
 │   │   ├── pom.xml          # Maven configuration
 │   │   ├── run.sh           # Start script
@@ -23,7 +25,7 @@ JFR-Test/
 │   │   ├── jfr-merged/      # Merged recordings (generated)
 │   │   └── README.md        # Detailed documentation
 │   │
-│   ├── jfr-stream-app/      # Streaming JFR (port 8081)
+│   ├── jfr-jdk-api-based-app/      # Streaming JFR (port 8081)
 │   │   ├── src/             # Spring Boot application
 │   │   ├── pom.xml          # Maven configuration
 │   │   ├── run.sh           # Start script
@@ -45,8 +47,9 @@ JFR-Test/
 ```
 
 > Each application writes its JFR output **inside its own folder**:
-> - **jfr-file-based-app**: Manual JFR files via jcmd
-> - **jfr-stream-app**: Automatic exports to `jfr-exports/`, merged to `jfr-merged/`
+>
+> - **jfr-profiler-based-app**: Manual JFR files via jcmd
+> - **jfr-jdk-api-based-app**: Automatic exports to `jfr-exports/`, merged to `jfr-merged/`
 > - **jfr-stream-based-otel-app**: No files, streams to OTLP backend
 > Both file-based apps write to directories that are generated at runtime and git-ignored.
 
@@ -61,8 +64,9 @@ The easiest way to use all three applications is through the interactive menu:
 ```
 
 The menu provides:
-- **Options 1-6**: jfr-file-based-app (traditional JFR, port 8080)
-- **Options 7-11**: jfr-stream-app (streaming to files, port 8081)
+
+- **Options 1-6**: jfr-profiler-based-app (traditional JFR, port 8080)
+- **Options 7-11**: jfr-jdk-api-based-app (streaming to files, port 8081)
 - **Options 12-17**: jfr-stream-based-otel-app (OTLP streaming, port 8082)
 - **Options 18-20**: Shared tools (visualization, configuration, cleanup)
 
@@ -70,23 +74,23 @@ See [MENU.md](MENU.md) for detailed menu documentation.
 
 ### Manual Quick Start
 
-#### Option 1: Traditional JFR (jfr-file-based-app)
+#### Option 1: Traditional JFR (jfr-profiler-based-app)
 
 ```bash
-cd apps/jfr-file-based-app
+cd apps/jfr-profiler-based-app
 ./run.sh
 
 # In another terminal, profile with jcmd:
-jps -l | grep jfr-test
+jps -l | grep jfr-profiler-based-app
 jcmd <PID> JFR.start name=MyRecording
 # ... wait and generate load ...
 jcmd <PID> JFR.dump name=MyRecording filename=recording.jfr
 ```
 
-#### Option 2: Streaming JFR (jfr-stream-app)
+#### Option 2: Streaming JFR (jfr-jdk-api-based-app)
 
 ```bash
-cd apps/jfr-stream-app
+cd apps/jfr-jdk-api-based-app
 ./run.sh
 
 # Check status
@@ -117,8 +121,8 @@ docker-compose logs -f
 
 ## Applications Comparison
 
-| Feature | jfr-file-based-app | jfr-stream-app | jfr-stream-based-otel-app |
-|---------|-------------------|----------------|---------------------------|
+| Feature | jfr-profiler-based-app | jfr-jdk-api-based-app | jfr-stream-based-otel-app |
+| --------- | ------------------- | ---------------- | --------------------------- |
 | **Port** | 8080 | 8081 | 8082 |
 | **JFR Control** | External tools | Programmatic API | Programmatic API |
 | **Recording** | On-demand | Continuous | Continuous |
@@ -130,13 +134,15 @@ docker-compose logs -f
 
 ## Key Features
 
-### jfr-file-based-app
+### jfr-profiler-based-app
+
 ✅ Simple Spring Boot application  
 ✅ Traditional JFR profiling  
 ✅ Works with JMC, jcmd, JVM flags  
 ✅ Ideal for learning and one-time profiling  
 
-### jfr-stream-app
+### jfr-jdk-api-based-app
+
 ✅ Continuous JFR recording  
 ✅ Automatic exports every 15 seconds  
 ✅ REST API for status monitoring  
@@ -144,6 +150,7 @@ docker-compose logs -f
 ✅ Perfect for production monitoring  
 
 ### jfr-stream-based-otel-app
+
 ✅ Continuous JFR recording  
 ✅ OpenTelemetry Profile Signal export  
 ✅ OTLP gRPC protocol  
@@ -160,12 +167,12 @@ docker-compose logs -f
 ## Building All Applications
 
 ```bash
-# Build jfr-file-based-app
-cd apps/jfr-file-based-app
+# Build jfr-profiler-based-app
+cd apps/jfr-profiler-based-app
 mvn clean package
 
-# Build jfr-stream-app
-cd ../jfr-stream-app
+# Build jfr-jdk-api-based-app
+cd ../jfr-jdk-api-based-app
 mvn clean package
 
 # Build jfr-stream-based-otel-app
@@ -179,11 +186,11 @@ Since they use different ports, you can run all three at the same time:
 
 ```bash
 # Terminal 1
-cd apps/jfr-file-based-app
+cd apps/jfr-profiler-based-app
 ./run.sh
 
 # Terminal 2
-cd apps/jfr-stream-app
+cd apps/jfr-jdk-api-based-app
 ./run.sh
 
 # Terminal 3 (after starting an OTLP backend)
@@ -195,11 +202,12 @@ Then compare the approaches side-by-side!
 
 ## Analyzing JFR Data
 
-### For jfr-file-based-app and jfr-stream-app
+### For jfr-profiler-based-app and jfr-jdk-api-based-app
 
 Both applications produce `.jfr` files that can be analyzed with:
 
 ### Command-Line Tools
+
 ```bash
 # Summary
 jfr print recording.jfr
@@ -212,6 +220,7 @@ jfr print --json recording.jfr > events.json
 ```
 
 ### JDK Mission Control (GUI)
+
 1. Download JMC
 2. Open the `.jfr` file
 3. Explore the various analysis tabs
@@ -219,6 +228,7 @@ jfr print --json recording.jfr > events.json
 ### For jfr-stream-based-otel-app
 
 Profiles are exported to the OTLP backend and can be viewed in:
+
 - Your APM system's UI
 - OpenTelemetry Collector with visualization
 - Elastic DevFiler UI
@@ -227,28 +237,31 @@ Profiles are exported to the OTLP backend and can be viewed in:
 ## Documentation
 
 - **[PROJECT-OVERVIEW.md](PROJECT-OVERVIEW.md)** - Detailed comparison and architecture
-- **[apps/jfr-file-based-app/README.md](apps/jfr-file-based-app/README.md)** - Traditional JFR documentation
-- **[apps/jfr-stream-app/README.md](apps/jfr-stream-app/README.md)** - Streaming JFR documentation
-- **[apps/jfr-stream-app/ARCHITECTURE.md](apps/jfr-stream-app/ARCHITECTURE.md)** - Architecture diagrams
+- **[apps/jfr-profiler-based-app/README.md](apps/jfr-profiler-based-app/README.md)** - Traditional JFR documentation
+- **[apps/jfr-jdk-api-based-app/README.md](apps/jfr-jdk-api-based-app/README.md)** - Streaming JFR documentation
+- **[apps/jfr-jdk-api-based-app/ARCHITECTURE.md](apps/jfr-jdk-api-based-app/ARCHITECTURE.md)** - Architecture diagrams
 - **[apps/jfr-stream-based-otel-app/README.md](apps/jfr-stream-based-otel-app/README.md)** - OTLP export documentation
 - **[apps/jfr-stream-based-otel-app/QUICKSTART.md](apps/jfr-stream-based-otel-app/QUICKSTART.md)** - Quick start guide
 
 ## Use Cases
 
-### Use jfr-file-based-app when:
+### Use jfr-profiler-based-app when
+
 - Doing interactive profiling sessions
 - Learning JFR concepts
 - Troubleshooting specific issues
 - Working with JMC GUI
 
-### Use jfr-stream-app when:
+### Use jfr-jdk-api-based-app when
+
 - Running continuous monitoring in production
 - Building custom APM systems
 - Needing automatic data collection
 - Integrating with monitoring pipelines
 - Analyzing profiles locally with JMC
 
-### Use jfr-stream-based-otel-app when:
+### Use jfr-stream-based-otel-app when
+
 - Integrating with OpenTelemetry infrastructure
 - Using OTLP-compatible APM systems
 - Streaming profiles to a central backend
@@ -257,15 +270,18 @@ Profiles are exported to the OTLP backend and can be viewed in:
 
 ## API Endpoints
 
-### jfr-file-based-app (port 8080)
+### jfr-profiler-based-app (port 8080)
+
 - `GET /api/hello` - Test endpoint
 - `GET /actuator/health` - Health check
 
-### jfr-stream-app (port 8081)
+### jfr-jdk-api-based-app (port 8081)
+
 - `GET /api/jfr/status` - JFR recording status and statistics
 - `GET /api/jfr/health` - Health check
 
 ### jfr-stream-based-otel-app (port 8082)
+
 - `GET /api/jfr/status` - JFR recording and OTLP export status
 - `GET /api/jfr/health` - Health check
 
@@ -273,8 +289,8 @@ Profiles are exported to the OTLP backend and can be viewed in:
 
 Applications can be configured via their respective `application.yaml` files:
 
-- **jfr-file-based-app**: Basic Spring Boot settings  
-- **jfr-stream-app**: JFR export directory, intervals, buffer size
+- **jfr-profiler-based-app**: Basic Spring Boot settings  
+- **jfr-jdk-api-based-app**: JFR export directory, intervals, buffer size
 - **jfr-stream-based-otel-app**: OTLP endpoint, export intervals, instrumentation scope
 
 See individual README files for details.
@@ -282,19 +298,25 @@ See individual README files for details.
 ## Troubleshooting
 
 ### Port already in use
+
 Change ports in `application.yaml`:
-- jfr-file-based-app: default 8080
-- jfr-stream-app: default 8081
+
+- jfr-profiler-based-app: default 8080
+- jfr-jdk-api-based-app: default 8081
 - jfr-stream-based-otel-app: default 8082
 
 ### JFR not available
+
 JFR is included in OpenJDK 11+ and Oracle JDK 11+. Check with:
+
 ```bash
 java -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal | grep FlightRecorder
 ```
 
 ### Build failures
+
 Clean and rebuild:
+
 ```bash
 mvn clean install
 ```
@@ -302,8 +324,9 @@ mvn clean install
 ## Performance Impact
 
 JFR is designed for production use with minimal overhead:
+
 - Typical overhead: <2% CPU
-- jfr-stream-app export overhead: ~100-200ms every 15 seconds
+- jfr-jdk-api-based-app export overhead: ~100-200ms every 15 seconds
 - jfr-stream-based-otel-app export overhead: ~200-500ms every 15 seconds (includes network)
 
 ## Contributing

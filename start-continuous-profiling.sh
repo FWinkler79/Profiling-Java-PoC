@@ -4,7 +4,7 @@
 # Creates periodic 15-second snapshots instead of using chunking
 # This gives you true "delta" files - each contains only its 15-second window
 
-JFR_SNAPSHOT_DIR="apps/jfr-file-based-app/jfr-exports"
+JFR_SNAPSHOT_DIR="apps/jfr-profiler-based-app/jfr-exports"
 mkdir -p "$JFR_SNAPSHOT_DIR"
 
 echo "Starting continuous JFR profiling with 15-second snapshots..."
@@ -24,9 +24,9 @@ maxage=15s,\
 disk=true"
 
 # Build if needed
-if [ ! -f "apps/jfr-file-based-app/target/jfr-test-1.0.0.jar" ]; then
-    echo "Building jfr-file-based-app application..."
-    cd apps/jfr-file-based-app
+if [ ! -f "apps/jfr-profiler-based-app/target/jfr-profiler-based-app-1.0.0.jar" ]; then
+    echo "Building jfr-profiler-based-app application..."
+    cd apps/jfr-profiler-based-app
     mvn clean package -DskipTests
     cd ../..
     echo ""
@@ -34,7 +34,7 @@ fi
 
 # Start the application in background
 echo "Starting application..."
-java $JAVA_OPTS $JFR_OPTS -jar apps/jfr-file-based-app/target/jfr-test-1.0.0.jar &
+java $JAVA_OPTS $JFR_OPTS -jar apps/jfr-profiler-based-app/target/jfr-profiler-based-app-1.0.0.jar &
 APP_PID=$!
 
 echo "Application started with PID: $APP_PID"

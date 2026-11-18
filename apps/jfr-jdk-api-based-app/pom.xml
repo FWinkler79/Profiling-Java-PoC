@@ -13,11 +13,11 @@
     </parent>
 
     <groupId>com.example</groupId>
-    <artifactId>jfr-stream-app</artifactId>
+    <artifactId>jfr-jdk-api-based-app</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>JFR Stream Application</name>
+    <name>JFR JDK API Application</name>
     <description>Spring Boot app that continuously streams JFR events and exports them to files</description>
 
     <properties>

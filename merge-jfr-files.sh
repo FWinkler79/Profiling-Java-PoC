@@ -6,13 +6,13 @@
 #
 # Usage: ./merge-jfr-files.sh [source-folder]
 #   source-folder   Directory containing the .jfr files
-#                    (default: apps/jfr-file-based-app/jfr-exports)
+#                    (default: apps/jfr-profiler-based-app/jfr-exports)
 #
 # The merged file is written to a sibling "jfr-merged" folder next to the
 # source, so each app's merged output stays within that app's directory
-# (e.g. source apps/jfr-stream-app/jfr-exports -> apps/jfr-stream-app/jfr-merged).
+# (e.g. source apps/jfr-jdk-api-based-app/jfr-exports -> apps/jfr-jdk-api-based-app/jfr-merged).
 
-SOURCE_DIR="${1:-apps/jfr-file-based-app/jfr-exports}"
+SOURCE_DIR="${1:-apps/jfr-profiler-based-app/jfr-exports}"
 OUTPUT_DIR="$(dirname "$SOURCE_DIR")/jfr-merged"
 
 if [ ! -d "$SOURCE_DIR" ]; then

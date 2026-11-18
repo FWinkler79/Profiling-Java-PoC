@@ -1,4 +1,4 @@
-# JFR Stream Application - Quick Start
+# JFR JDK API Application - Quick Start
 
 ## What Was Created
 
@@ -6,12 +6,12 @@ A complete Spring Boot application that demonstrates continuous JFR event stream
 
 ### Project Structure
 
-```
-jfr-stream-app/
-├── src/main/java/com/example/jfrstream/
-│   ├── JfrStreamApplication.java          # Main Spring Boot application
+```text
+jfr-jdk-api-based-app/
+├── src/main/java/com/example/jfrjdkapi/
+│   ├── JfrJdkApiApplication.java          # Main Spring Boot application
 │   ├── service/
-│   │   └── JfrStreamService.java          # Core JFR streaming service
+│   │   └── JfrJdkApiService.java          # Core JFR streaming service
 │   └── controller/
 │       └── JfrController.java              # REST API endpoints
 ├── src/main/resources/
@@ -36,34 +36,40 @@ jfr-stream-app/
 ## Running the Application
 
 ### Option 1: Using the run script (recommended)
+
 ```bash
 ./run.sh
 ```
 
 ### Option 2: Using Maven
+
 ```bash
 mvn spring-boot:run
 ```
 
 ### Option 3: Running the JAR
+
 ```bash
 mvn clean package
-java -jar target/jfr-stream-app-1.0.0.jar
+java -jar target/jfr-jdk-api-based-app-1.0.0.jar
 ```
 
 ## Testing the Application
 
 ### 1. Check it's running
+
 ```bash
 curl http://localhost:8081/api/jfr/health
 ```
 
 ### 2. Check status
+
 ```bash
 curl http://localhost:8081/api/jfr/status
 ```
 
 Expected output:
+
 ```json
 {
   "recordingState": "RUNNING",
@@ -74,24 +80,29 @@ Expected output:
 ```
 
 ### 3. Generate load (optional)
+
 In a separate terminal:
+
 ```bash
 ./generate-load.sh
 ```
 
 ### 4. Check exported files
+
 ```bash
 ls -lh jfr-exports/
 ```
 
 You should see files like:
-```
+
+```text
 jfr-export-20261116-163045-0001.jfr
 jfr-export-20261116-163115-0002.jfr
 jfr-export-20261116-163145-0003.jfr
 ```
 
 ### 5. Analyze a JFR file
+
 ```bash
 # Summary
 jfr print jfr-exports/jfr-export-*.jfr | head -50
@@ -124,7 +135,9 @@ server.port=8081
 ## Key Features
 
 ### Monitored JFR Events
+
 Mirrors the root `jfr-config.jfc` settings:
+
 - Method profiling / Execution samples (every 10 ms)
 - CPU Load (every 1 second)
 - Thread statistics (every 1 second)
@@ -139,6 +152,7 @@ Mirrors the root `jfr-config.jfc` settings:
 - Environment variables (captured at recording start)
 
 ### Automatic Export
+
 - Non-blocking: Recording continues while exporting
 - Rolling buffer: Only keeps last 15 seconds in memory
 - Timestamped files: Easy to identify when events occurred
@@ -147,12 +161,14 @@ Mirrors the root `jfr-config.jfc` settings:
 ## What Makes This Different
 
 ### Traditional JFR Approach
+
 - Requires JVM flags: `-XX:StartFlightRecording`
 - Manual control via JMC or command-line
 - Typically dump entire recording when stopping
 - Good for one-time profiling sessions
 
 ### This Application (Programmatic JFR)
+
 - No JVM flags needed
 - Automatic recording on startup
 - Continuous operation with periodic snapshots
@@ -161,7 +177,7 @@ Mirrors the root `jfr-config.jfc` settings:
 
 ## Expected Log Output
 
-```
+```text
 2026-11-16 16:36:15 - JFR export directory: /Users/user/jfr-exports
 2026-11-16 16:36:15 - JFR continuous recording started - exporting every 15 seconds
 2026-11-16 16:36:45 - Exported JFR snapshot #1 to jfr-export-20261116-163645-0001.jfr (3214 events, 125 ms)
@@ -172,17 +188,21 @@ Mirrors the root `jfr-config.jfc` settings:
 ## Troubleshooting
 
 ### Port 8081 already in use
+
 Change the port in `application.properties`:
+
 ```properties
 server.port=8082
 ```
 
 ### No events in exports
+
 - Wait at least 30 seconds after startup
 - Generate some load with `./generate-load.sh`
 - Check that the recording started (look for startup log messages)
 
 ### Export directory not created
+
 - Check write permissions in the current directory
 - Use an absolute path in configuration
 
@@ -193,7 +213,7 @@ server.port=8082
 3. **Check the exports**: `ls jfr-exports/`
 4. **Analyze a file**: Use JMC or `jfr print`
 5. **Generate load**: `./generate-load.sh` in another terminal
-6. **Customize events**: Edit `JfrStreamService.java` to enable/disable event types
+6. **Customize events**: Edit `JfrJdkApiService.java` to enable/disable event types
 
 ## Documentation
 
@@ -204,9 +224,10 @@ server.port=8082
 ## Built Successfully
 
 The application has been built and is ready to run:
-```
+
+```text
 ✓ Compilation successful
-✓ JAR created: target/jfr-stream-app-1.0.0.jar
+✓ JAR created: target/jfr-jdk-api-based-app-1.0.0.jar
 ✓ All files in place
 ```
 

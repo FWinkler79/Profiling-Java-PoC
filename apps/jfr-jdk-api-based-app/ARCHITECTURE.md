@@ -1,8 +1,8 @@
-# JFR Stream Application Architecture
+# JFR JDK API Application Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
-│                   JFR Stream Application                         │
+│                   JFR JDK API Application                         │
 │                        (Port 8081)                               │
 └─────────────────────────────────────────────────────────────────┘
 
@@ -12,13 +12,13 @@
 │  @SpringBootApplication                                          │
 │  @EnableScheduling                                               │
 │           │                                                      │
-│           ├─► JfrStreamService (@PostConstruct)                 │
+│           ├─► JfrJdkApiService (@PostConstruct)                 │
 │           │                                                      │
 │           └─► JfrController (REST endpoints)                    │
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
-│                    JfrStreamService                              │
+│                    JfrJdkApiService                              │
 │                                                                  │
 │  ┌──────────────────────────────────────────────────┐           │
 │  │  Continuous Recording                             │           │
@@ -91,7 +91,7 @@
 │    Returns:                                                      │
 │    {                                                             │
 │      "status": "UP",                                            │
-│      "service": "JFR Stream Service"                            │
+│      "service": "JFR JDK API Service"                            │
 │    }                                                             │
 └─────────────────────────────────────────────────────────────────┘
 
@@ -143,7 +143,7 @@
 
 ## Data Flow
 
-```
+```text
 ┌──────────────┐
 │  JVM Events  │ (CPU, GC, Threads, Monitors, etc.)
 └──────┬───────┘

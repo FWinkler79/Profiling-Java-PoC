@@ -1,6 +1,6 @@
-package com.example.jfrstream.controller;
+package com.example.jfrjdkapi.controller;
 
-import com.example.jfrstream.service.JfrStreamService;
+import com.example.jfrjdkapi.service.JfrJdkApiService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,14 +18,14 @@ import java.util.Map;
 public class JfrController {
 
     @Autowired
-    private JfrStreamService jfrStreamService;
+    private JfrJdkApiService jfrJdkApiService;
 
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> getStatus() {
         Map<String, Object> status = new HashMap<>();
-        status.put("recordingState", jfrStreamService.getRecordingState());
-        status.put("totalExports", jfrStreamService.getExportCount());
-        status.put("totalEventsProcessed", jfrStreamService.getTotalEventCount());
+        status.put("recordingState", jfrJdkApiService.getRecordingState());
+        status.put("totalExports", jfrJdkApiService.getExportCount());
+        status.put("totalEventsProcessed", jfrJdkApiService.getTotalEventCount());
         status.put("message", "JFR continuous streaming is active");
         return ResponseEntity.ok(status);
     }
@@ -34,7 +34,7 @@ public class JfrController {
     public ResponseEntity<Map<String, String>> health() {
         Map<String, String> health = new HashMap<>();
         health.put("status", "UP");
-        health.put("service", "JFR Stream Service");
+        health.put("service", "JFR JDK API Service");
         return ResponseEntity.ok(health);
     }
 }

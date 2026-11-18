@@ -212,7 +212,7 @@ java -jar target/jfr-stream-based-otel-app-1.0.0.jar \
 
 ## Comparison with Other Apps
 
-| Feature | jfr-file-based-app | jfr-stream-app | jfr-stream-based-otel-app |
+| Feature | jfr-profiler-based-app | jfr-stream-app | jfr-stream-based-otel-app |
 |---------|-------------------|----------------|---------------------------|
 | **Port** | 8080 | 8081 | 8082 |
 | **JFR Control** | External tools | Programmatic | Programmatic |

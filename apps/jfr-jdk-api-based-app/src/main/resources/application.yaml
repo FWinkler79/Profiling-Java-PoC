@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: JFR Stream Application
+    name: JFR JDK API Application
 
 # JFR Export Configuration
 jfr:
@@ -22,7 +22,7 @@ jfr:
 logging:
   level:
     root: INFO
-    com.example.jfrstream: INFO
+    com.example.jfrjdkapi: INFO
   pattern:
     console: '%d{yyyy-MM-dd HH:mm:ss} - %msg%n'
 

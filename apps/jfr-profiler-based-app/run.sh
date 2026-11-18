@@ -12,7 +12,7 @@ echo "To profile with JFR, use one of these methods:"
 echo ""
 echo "1. Start with JFR enabled:"
 echo "   java -XX:StartFlightRecording=filename=recording.jfr,duration=60s \\"
-echo "        -jar target/jfr-test-1.0.0.jar"
+echo "        -jar target/jfr-profiler-based-app-1.0.0.jar"
 echo ""
 echo "2. Use jcmd while running:"
 echo "   jcmd <PID> JFR.start name=MyRecording"
@@ -24,7 +24,7 @@ echo ""
 
 cd "$(dirname "$0")"
 
-if [ ! -f "target/jfr-test-1.0.0.jar" ]; then
+if [ ! -f "target/jfr-profiler-based-app-1.0.0.jar" ]; then
     echo "Building application..."
     mvn clean package
     echo ""

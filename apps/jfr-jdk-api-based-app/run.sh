@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# Script to run the JFR Stream Application
+# Script to run the JFR JDK API Application
 
 echo "=========================================="
-echo "Starting JFR Stream Application"
+echo "Starting JFR JDK API Application"
 echo "=========================================="
 echo ""
 echo "The application will:"
@@ -21,11 +21,11 @@ echo ""
 
 cd "$(dirname "$0")"
 
-if [ ! -f "target/jfr-stream-app-1.0.0.jar" ]; then
+if [ ! -f "target/jfr-jdk-api-based-app-1.0.0.jar" ]; then
     echo "Building application..."
     mvn clean package
     echo ""
 fi
 
 echo "Starting application..."
-java -jar target/jfr-stream-app-1.0.0.jar
+java -jar target/jfr-jdk-api-based-app-1.0.0.jar

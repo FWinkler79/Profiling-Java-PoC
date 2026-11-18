@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Script to generate load for the JFR Stream Application
+# Script to generate load for the JFR JDK API Application
 
-echo "Generating load for JFR Stream Application..."
+echo "Generating load for JFR JDK API Application..."
 echo "This will call the API endpoints repeatedly to generate JFR events"
 echo ""
 
