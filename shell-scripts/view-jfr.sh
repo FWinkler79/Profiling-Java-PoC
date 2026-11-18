@@ -29,30 +29,23 @@ EOF
 find_jfr_files() {
     local files=()
 
-    # Check both directories
-    if [ -d "jfr-snapshots" ]; then
-        files+=(jfr-snapshots/*.jfr)
-    fi
-    if [ -d "jfr-recordings" ]; then
-        files+=(jfr-recordings/*.jfr)
-    fi
-
-    # Filter out glob patterns if no files found
-    local result=()
-    for f in "${files[@]}"; do
-        if [ -f "$f" ]; then
-            result+=("$f")
+    # Search all apps' jfr-exports and jfr-merged directories
+    for dir in apps/*/jfr-exports apps/*/jfr-merged; do
+        if [ -d "$dir" ]; then
+            for f in "$dir"/*.jfr; do
+                [ -f "$f" ] && files+=("$f")
+            done
         fi
     done
 
-    echo "${result[@]}"
+    echo "${files[@]}"
 }
 
 select_jfr_file() {
     local files=($(find_jfr_files))
 
     if [ ${#files[@]} -eq 0 ]; then
-        echo "No .jfr files found in jfr-snapshots/ or jfr-recordings/"
+        echo "No .jfr files found in apps/*/jfr-exports/ or apps/*/jfr-merged/"
         return 1
     fi
 
