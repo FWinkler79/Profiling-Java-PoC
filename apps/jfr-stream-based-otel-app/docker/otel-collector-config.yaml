@@ -19,28 +19,21 @@ processors:
         action: upsert
 
 exporters:
-  # Console exporter - outputs to stdout for inspection
-  logging:
+  # Debug exporter - outputs to stdout for inspection (replaces deprecated logging exporter)
+  debug:
     verbosity: detailed
     sampling_initial: 100
     sampling_thereafter: 100
-
-  # Debug exporter - even more detailed output
-  debug:
-    verbosity: detailed
-    sampling_initial: 5
-    sampling_thereafter: 200
 
 service:
   pipelines:
     logs:
       receivers: [otlp]
       processors: [batch, resource]
-      exporters: [logging, debug]
+      exporters: [debug]
 
   telemetry:
     logs:
       level: info
     metrics:
       level: detailed
-      address: 0.0.0.0:8888
