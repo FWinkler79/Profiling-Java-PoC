@@ -1,6 +1,6 @@
 # Menu.sh - Interactive Control Panel
 
-The `menu.sh` script provides a unified interface for managing all three JFR applications and their associated tools.
+The `menu.sh` script provides a unified interface for managing four of the five JFR applications and their associated tools. (`jfr-otel-profiles-app` is run directly via its own `run.sh`.)
 
 ## Overview
 
@@ -8,12 +8,13 @@ The `menu.sh` script provides a unified interface for managing all three JFR app
 ./menu.sh
 ```
 
-The menu is organized into four sections:
+The menu is organized into five sections:
 
 1. **jfr-profiler-based-app** (options 1-6) - Traditional JFR approach
 2. **jfr-jdk-api-based-app** (options 7-11) - Streaming to local files
 3. **jfr-otel-logs-app** (options 12-17) - Streaming to OTLP collector
-4. **Shared tools** (options 18-20) - Common utilities
+4. **jfr-otel-logs-based-file-upload-app** (options 21-26) - OTLP file-upload
+5. **Shared tools** (options 27-29) - Common utilities
 
 ## Menu Options
 
@@ -169,35 +170,35 @@ Shuts down the Docker collector:
 
 ### Shared Tools
 
-#### Option 18: Visualize JFR files (interactive)
+#### Option 27: Visualize JFR files (interactive)
 
-Launches interactive JFR file selector:
+Launches `./shell-scripts/view-jfr.sh`, an interactive JFR file viewer:
 
-- Lists all available `.jfr` files from all apps
-- Merges selected files if needed
 - Opens in JDK Mission Control (if installed)
-- Provides command-line viewing options
+- Provides command-line summary, detailed print, JSON export, and comparison options
 
-#### Option 19: View JFR configuration
+#### Option 28: View JFR configuration
 
 Displays the JFR configuration file:
 
 - Shows first 50 lines of `apps/jfr-profiler-based-app/jfr-config.jfc`
 - Lists key settings (execution sampling, CPU load, GC events, etc.)
-- Used by `start-continuous-profiling.sh`
+- Used by `apps/jfr-profiler-based-app/start-continuous-profiling.sh`
 
-#### Option 20: Clean up recordings and build artifacts
+#### Option 29: Clean up recordings and build artifacts
 
 Interactive cleanup with confirmations for each:
 
 - `apps/jfr-profiler-based-app/target/` (Maven build artifacts)
 - `apps/jfr-jdk-api-based-app/target/` (Maven build artifacts)
 - `apps/jfr-otel-logs-app/target/` (Maven build artifacts)
+- `apps/jfr-otel-logs-based-file-upload-app/target/` (Maven build artifacts)
 - `apps/jfr-profiler-based-app/jfr-exports/` (recorded snapshots)
 - `apps/jfr-profiler-based-app/jfr-merged/` (merged files)
 - `apps/jfr-jdk-api-based-app/jfr-exports/` (exported snapshots)
 - `apps/jfr-jdk-api-based-app/jfr-merged/` (merged files)
-- OTLP Collector (Docker container)
+- jfr-otel-logs-app OTLP Collector (Docker container)
+- jfr-otel-logs-based-file-upload-app OTLP Collector (Docker container)
 
 Each item requires individual confirmation (`[y/N]`).
 
@@ -216,7 +217,7 @@ Exits the menu.
    - Wait for several snapshots
    - Press Ctrl+C
 3. Option 4  - Merge snapshots
-4. Option 18 - Visualize in JMC
+4. Option 27 - Visualize in JMC
 ```
 
 ### Workflow 2: Streaming JFR to Files
@@ -228,7 +229,7 @@ Exits the menu.
    - Wait for exports
    - Press Ctrl+C
 3. Option 11 - Merge exports
-4. Option 18 - Visualize in JMC
+4. Option 27 - Visualize in JMC
 ```
 
 ### Workflow 3: OTLP Streaming
@@ -252,6 +253,7 @@ Since all apps use port 8080, run one at a time. Use the menu to stop one app th
 → Option 2 (jfr-profiler-based-app: continuous profiling) — then Ctrl+C when done
 → Option 8 (jfr-jdk-api-based-app: streaming to files)   — then Ctrl+C when done
 → Option 13, then 14 (jfr-otel-logs-app: OTLP streaming) — then Ctrl+C when done
+→ Option 22, then 23 (jfr-otel-logs-based-file-upload-app: OTLP file upload) — then Ctrl+C when done
 ```
 
 ## Menu Features
@@ -277,26 +279,34 @@ Pressing Enter re-runs `./menu.sh` to show the menu again.
 The menu calls these scripts:
 
 - `./apps/jfr-profiler-based-app/start-continuous-profiling.sh` - Option 2
-- `./apps/jfr-profiler-based-app/load-generator.sh` - Options 3, 9
+- `./apps/jfr-profiler-based-app/load-generator.sh` - Option 3
 - `./shell-scripts/merge-jfr-files.sh` - Options 4, 11
 - `./python-scripts/analyze-snapshots.py` - Option 5
-- `./shell-scripts/view-jfr.sh` - Option 18
 - `./apps/jfr-jdk-api-based-app/run.sh` - Option 8
 - `./apps/jfr-jdk-api-based-app/generate-load.sh` - Option 9
-- `./apps/jfr-otel-logs-app/run.sh` - Option 14
 - `./apps/jfr-otel-logs-app/docker/start-collector.sh` - Option 13
+- `./apps/jfr-otel-logs-app/run.sh` - Option 14
+- `./apps/jfr-otel-logs-based-file-upload-app/docker/start-collector.sh` - Option 22
+- `./apps/jfr-otel-logs-based-file-upload-app/run.sh` - Option 23
+- `./shell-scripts/view-jfr.sh` - Option 27
 
 ## Docker Integration
 
-Options 13, 15, and 17 use Docker Compose for the OTLP Collector:
+Options 13/15/17 and 22/24/26 use Docker Compose for the OTLP Collector in each respective app's `docker/` folder.
 
-### Files
+### jfr-otel-logs-app
 
-- `apps/jfr-otel-logs-app/docker/docker-compose.yaml` - Service definition
-- `apps/jfr-otel-logs-app/docker/otel-collector-config.yaml` - Pipeline configuration
-- `apps/jfr-otel-logs-app/docker/start-collector.sh` - Startup wrapper
+- `apps/jfr-otel-logs-app/docker/docker-compose.yaml`
+- `apps/jfr-otel-logs-app/docker/otel-collector-config.yaml`
+- `apps/jfr-otel-logs-app/docker/start-collector.sh`
 
-### Ports Exposed
+### jfr-otel-logs-based-file-upload-app
+
+- `apps/jfr-otel-logs-based-file-upload-app/docker/docker-compose.yaml`
+- `apps/jfr-otel-logs-based-file-upload-app/docker/otel-collector-config.yaml`
+- `apps/jfr-otel-logs-based-file-upload-app/docker/start-collector.sh`
+
+### Collector Ports Exposed
 
 - `4317` - OTLP gRPC receiver
 - `4318` - OTLP HTTP receiver
@@ -346,9 +356,9 @@ mvn clean install
 
 ## Tips
 
-1. **Start with option 18** after generating recordings to visualize data
-2. **Use option 20 regularly** to clean up disk space from JFR exports
-3. **Run option 16** to verify the OTLP app is successfully exporting
+1. **Start with option 27** after generating recordings to visualize data
+2. **Use option 29 regularly** to clean up disk space from JFR exports
+3. **Run option 16** to verify the jfr-otel-logs-app is successfully exporting (option 25 for jfr-otel-logs-based-file-upload-app)
 4. **Keep option 15 open** in a dedicated terminal to watch events stream
 5. **Press Ctrl+C twice** if a foreground process doesn't stop immediately
 

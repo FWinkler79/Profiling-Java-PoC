@@ -5,12 +5,14 @@ showcasing both traditional and programmatic approaches.
 
 ## Overview
 
-This project contains **three Spring Boot applications** that demonstrate different ways
+This project contains **five Spring Boot applications** that demonstrate different ways
 to use JFR for performance monitoring and profiling:
 
-1. **jfr-profiler-based-app** - Traditional JFR approach using external tools
-2. **jfr-jdk-api-based-app** - Programmatic JFR with continuous streaming to files
-3. **jfr-otel-logs-app** - Programmatic JFR with OTLP export (no files)
+1. **jfr-profiler-based-app** — Traditional JFR using external tools (jcmd, JVM flags, JMC)
+2. **jfr-jdk-api-based-app** — Programmatic JFR with continuous streaming to local files
+3. **jfr-otel-logs-app** — Programmatic JFR with OTLP logs export (no local files)
+4. **jfr-otel-logs-based-file-upload-app** — OTLP logs export via file upload
+5. **jfr-otel-profiles-app** — OpenTelemetry native profiles signal export
 
 ## Project Structure
 
@@ -93,7 +95,7 @@ JFR-Test/
 
 ### Using the Interactive Menu (Recommended)
 
-The easiest way to use all three applications is through the interactive menu:
+The easiest way to explore the applications is through the interactive menu:
 
 ```bash
 ./menu.sh
@@ -103,8 +105,11 @@ The menu provides:
 
 - **Options 1-6**: jfr-profiler-based-app (traditional JFR, port 8080)
 - **Options 7-11**: jfr-jdk-api-based-app (streaming to files, port 8080)
-- **Options 12-17**: jfr-otel-logs-app (OTLP streaming, port 8080)
-- **Options 18-20**: Shared tools (visualization, configuration, cleanup)
+- **Options 12-17**: jfr-otel-logs-app (OTLP logs streaming, port 8080)
+- **Options 21-26**: jfr-otel-logs-based-file-upload-app (OTLP file upload, port 8080)
+- **Options 27-29**: Shared tools (visualization, configuration, cleanup)
+
+The `jfr-otel-profiles-app` is run directly via `apps/jfr-otel-profiles-app/run.sh` (not yet in the menu).
 
 See [docs/menu.md](docs/menu.md) for detailed menu documentation.
 
@@ -115,12 +120,8 @@ See [docs/menu.md](docs/menu.md) for detailed menu documentation.
 ```bash
 cd apps/jfr-profiler-based-app
 ./run.sh
-
-# In another terminal, profile with jcmd:
-jps -l | grep jfr-profiler-based-app
-jcmd <PID> JFR.start name=MyRecording
-# ... wait and generate load ...
-jcmd <PID> JFR.dump name=MyRecording filename=recording.jfr
+# or with automatic 15s snapshots:
+./start-continuous-profiling.sh
 ```
 
 #### Option 2: Streaming JFR (jfr-jdk-api-based-app)
@@ -136,7 +137,7 @@ curl http://localhost:8080/api/jfr/status
 ls -lh jfr-exports/
 ```
 
-#### Option 3: OTLP Export (jfr-otel-logs-app)
+#### Option 3: OTLP Logs (jfr-otel-logs-app)
 
 ```bash
 # Start OTLP Collector with Docker Compose
@@ -153,6 +154,26 @@ curl http://localhost:8080/api/jfr/status
 # View collector logs
 cd docker
 docker-compose logs -f
+```
+
+#### Option 4: OTLP File Upload (jfr-otel-logs-based-file-upload-app)
+
+```bash
+cd apps/jfr-otel-logs-based-file-upload-app/docker
+./start-collector.sh
+
+cd apps/jfr-otel-logs-based-file-upload-app
+./run.sh
+```
+
+#### Option 5: OTLP Profiles (jfr-otel-profiles-app)
+
+```bash
+cd apps/jfr-otel-profiles-app/docker
+./start-collector.sh
+
+cd apps/jfr-otel-profiles-app
+./run.sh
 ```
 
 ## Applications Comparison
@@ -172,27 +193,35 @@ docker-compose logs -f
 
 ### jfr-profiler-based-app
 
-✅ Simple Spring Boot application  
-✅ Traditional JFR profiling  
-✅ Works with JMC, jcmd, JVM flags  
-✅ Ideal for learning and one-time profiling  
+✅ Simple Spring Boot application
+✅ Traditional JFR profiling via jcmd / JVM flags / JMC
+✅ `start-continuous-profiling.sh` for automatic 15s snapshots
+✅ Ideal for learning and one-time profiling
 
 ### jfr-jdk-api-based-app
 
-✅ Continuous JFR recording  
-✅ Automatic exports every 15 seconds  
-✅ REST API for status monitoring  
-✅ Rolling 15-second event buffer  
-✅ Perfect for production monitoring  
+✅ Continuous JFR recording via `jdk.jfr` API
+✅ Automatic exports every 15 seconds to `jfr-exports/`
+✅ REST API for status monitoring
+✅ Perfect for file-based continuous monitoring
 
 ### jfr-otel-logs-app
 
-✅ Continuous JFR recording  
-✅ OpenTelemetry Profile Signal export  
-✅ OTLP gRPC protocol  
-✅ No local file storage  
-✅ Direct integration with APM systems  
-✅ Production-ready OTLP streaming  
+✅ Streams ~20 JFR event types to OTLP Collector as log records
+✅ No local file storage
+✅ OTLP gRPC protocol
+
+### jfr-otel-logs-based-file-upload-app
+
+✅ Same OTLP logs export as above
+✅ File-upload transport path (write → upload → delete)
+✅ OTLP gRPC protocol
+
+### jfr-otel-profiles-app
+
+✅ Native OpenTelemetry profiles signal
+✅ `jdk.ExecutionSample` → `ExportProfilesServiceRequest`
+✅ Uses opentelemetry-java 1.68.0-alpha profiles API
 
 ## Prerequisites
 
@@ -218,21 +247,23 @@ mvn clean package
 
 ## Running Applications
 
-All applications use port 8080, so only one can run at a time. Start whichever app you want to work with:
+All applications use port 8080, so only one can run at a time. Use `menu.sh` to start any of the first four apps, or run directly:
 
 ```bash
 # Traditional JFR
-cd apps/jfr-profiler-based-app
-./run.sh
+cd apps/jfr-profiler-based-app && ./run.sh
 
 # Streaming to files
-cd apps/jfr-jdk-api-based-app
-./run.sh
+cd apps/jfr-jdk-api-based-app && ./run.sh
 
 # OTLP streaming (start collector first)
-cd apps/jfr-otel-logs-app
-./docker/start-collector.sh
-./run.sh
+cd apps/jfr-otel-logs-app && ./docker/start-collector.sh && ./run.sh
+
+# OTLP file upload
+cd apps/jfr-otel-logs-based-file-upload-app && ./docker/start-collector.sh && ./run.sh
+
+# OTLP profiles
+cd apps/jfr-otel-profiles-app && ./docker/start-collector.sh && ./run.sh
 ```
 
 ## Analyzing JFR Data

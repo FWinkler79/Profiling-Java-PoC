@@ -9,19 +9,19 @@ QUICK START
 
 After collecting JFR snapshots, visualize them with:
 
-  ./view-jfr.sh             ← Interactive menu (START HERE!)
+  ./shell-scripts/view-jfr.sh             ← Interactive menu (START HERE!)
 
 
 4 WAYS TO VISUALIZE
 ═══════════════════
 
 1. 🎯 Interactive Menu (No Install)
-   ./view-jfr.sh
+   ./shell-scripts/view-jfr.sh
    → Multiple options in one tool
    → Great for beginners
 
 2. 🎨 ASCII Charts (No Install)
-   python3 visualize-jfr.py
+   python3 python-scripts/visualize-jfr.py
    → Terminal-friendly visualization
    → Shows methods, allocations, events
 
@@ -73,15 +73,15 @@ RECOMMENDED WORKFLOW
 ════════════════════
 
 Step 1: Quick Check
-  jfr summary jfr-snapshots/snapshot-001-*.jfr
+  jfr summary apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
   → See if file has data
 
 Step 2: Visual Overview
-  python3 visualize-jfr.py
+  python3 python-scripts/visualize-jfr.py
   → Identify hot methods
 
 Step 3: Deep Analysis
-  jmc -open jfr-snapshots/snapshot-001-*.jfr
+  jmc -open apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
   → Flame graph shows call stacks
   → Memory tab shows allocations
 
@@ -111,7 +111,7 @@ Find memory-intensive classes:
     grep "class" | sort | uniq -c | sort -rn | head -20
 
 Compare two snapshots:
-  ./view-jfr.sh
+  ./shell-scripts/view-jfr.sh
   → Option 7
 
 Export to JSON:
@@ -185,10 +185,10 @@ TROUBLESHOOTING
 
 "No data in charts"
   → Application was idle during recording
-  → Use ./load-generator.sh next time
+  → Use ./apps/jfr-profiler-based-app/load-generator.sh next time
 
 "File too large"
-  → Reduce maxage in start-with-jfr.sh
+  → Reduce maxage in apps/jfr-profiler-based-app/start-continuous-profiling.sh
   → Or use command line: jfr print file.jfr | less
 
 
@@ -210,7 +210,7 @@ YOUR TURN!
 ══════════
 
 Try it now:
-  ./view-jfr.sh
+  ./shell-scripts/view-jfr.sh
 
 Happy profiling! 🚀
 

@@ -123,14 +123,13 @@ Change `maxage=15s` to `maxage=10s` or `maxage=5s`
 
 1. **Start with baseline** (current config):
    ```bash
-   ./start-with-jfr.sh
-   # In another terminal:
-   python3 jfr-snapshot-manager.py
+   cd apps/jfr-profiler-based-app
+   ./start-continuous-profiling.sh
    ```
 
 2. **Generate consistent load**:
    ```bash
-   ./load-generator.sh  # Choose option 2 (medium load)
+   ./apps/jfr-profiler-based-app/load-generator.sh  # Choose option 2 (medium load)
    ```
 
 3. **Let it run for 5 snapshots** (75 seconds)
@@ -221,15 +220,13 @@ Expected size: **500 KB - 1.5 MB** under load
 ./menu.sh
 
 # Build and run manually
-mvn clean package
-./start-with-jfr.sh
-
-# Collect snapshots
-python3 jfr-snapshot-manager.py
+mvn clean package -pl apps/jfr-profiler-based-app
+cd apps/jfr-profiler-based-app
+./start-continuous-profiling.sh
 
 # Analyze
-python3 python-scripts/analyze-snapshots.py
+python3 python-scripts/analyze-snapshots.py apps/jfr-profiler-based-app/jfr-exports
 
 # View a snapshot
-jfr print jfr-snapshots/snapshot-001-*.jfr | less
+jfr print apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr | less
 ```

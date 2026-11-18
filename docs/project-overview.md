@@ -1,30 +1,56 @@
 # JFR Test Project - Overview
 
-This project contains two Spring Boot applications demonstrating different approaches to Java Flight Recorder (JFR) usage.
+This project contains five Spring Boot applications demonstrating different approaches to Java Flight Recorder (JFR) usage, from traditional external-tool profiling to OpenTelemetry-native profiles export.
 
 ## Project Structure
 
 ```text
 JFR-Test/
 ├── apps/
-│   ├── jfr-profiler-based-app/  # Traditional JFR approach (external tools)
-│   │   ├── jfr-exports/     # Recorded snapshots (generated)
-│   │   └── jfr-merged/      # Merged recordings (generated)
-│   └── jfr-jdk-api-based-app/      # Programmatic JFR with continuous streaming
-│       ├── jfr-exports/     # Exported snapshots (generated)
-│       └── jfr-merged/      # Merged recordings (generated)
+│   ├── jfr-profiler-based-app/          # Traditional JFR (port 8080)
+│   │   ├── src/                         # Spring Boot application
+│   │   ├── run.sh                       # Start script
+│   │   ├── start-continuous-profiling.sh # Auto-snapshot script
+│   │   ├── load-generator.sh            # Load generator
+│   │   ├── jfr-config.jfc              # JFR recording configuration
+│   │   ├── jfr-exports/                 # Recorded snapshots (generated)
+│   │   └── jfr-merged/                  # Merged recordings (generated)
+│   ├── jfr-jdk-api-based-app/           # Streaming JFR to files (port 8080)
+│   │   ├── src/
+│   │   ├── run.sh
+│   │   ├── generate-load.sh
+│   │   ├── jfr-exports/                 # Exported snapshots (generated)
+│   │   └── jfr-merged/                  # Merged recordings (generated)
+│   ├── jfr-otel-logs-app/               # OTLP logs export (port 8080)
+│   │   ├── src/
+│   │   ├── run.sh
+│   │   └── docker/                      # OTLP Collector setup
+│   ├── jfr-otel-logs-based-file-upload-app/  # OTLP file-upload (port 8080)
+│   │   ├── src/
+│   │   ├── run.sh
+│   │   └── docker/
+│   └── jfr-otel-profiles-app/           # OTLP profiles signal (port 8080)
+│       ├── src/
+│       ├── run.sh
+│       └── docker/
+├── shell-scripts/
+│   ├── merge-jfr-files.sh
+│   └── view-jfr.sh
+├── python-scripts/
+│   ├── analyze-snapshots.py
+│   └── visualize-jfr.py
 ├── docs/project-overview.md  # This file
-└── README.md                # Main project README
+└── README.md                 # Main project README
 ```
 
-Each application keeps its JFR output within its own folder: raw recordings in
-`jfr-exports/` and merged recordings in `jfr-merged/` (both generated at runtime).
+Each file-based app keeps JFR output within its own folder: raw recordings in
+`jfr-exports/` and merged recordings in `jfr-merged/` (both generated at runtime and git-ignored).
 
 ## Applications
 
-### 1. JFR File-Based Application
+### 1. jfr-profiler-based-app (Traditional Approach)
 
-**Location**: `/Users/D056076/temp/JFR-Test/apps/jfr-profiler-based-app/`  
+**Location**: `apps/jfr-profiler-based-app/`
 **Port**: 8080
 
 A basic Spring Boot application demonstrating traditional JFR profiling using external tools and JVM flags.
@@ -33,6 +59,7 @@ A basic Spring Boot application demonstrating traditional JFR profiling using ex
 
 - Manual JFR control via JVM flags, `jcmd`, or JMC
 - On-demand profiling sessions
+- Auto-snapshot script (`start-continuous-profiling.sh`) for periodic 15s snapshots
 - Suitable for interactive analysis and troubleshooting
 
 **Running**:
@@ -40,30 +67,31 @@ A basic Spring Boot application demonstrating traditional JFR profiling using ex
 ```bash
 cd apps/jfr-profiler-based-app
 ./run.sh
+# Or with automatic snapshots:
+./start-continuous-profiling.sh
 ```
 
 **Profiling Methods**:
 
-- JVM flags: `java -XX:StartFlightRecording=...`
+- JVM flags: `java -XX:StartFlightRecording=settings=jfr-config.jfc,...`
 - jcmd: `jcmd <PID> JFR.start`
 - JDK Mission Control (JMC GUI)
 
 ---
 
-### 2. JFR JDK API Application
+### 2. jfr-jdk-api-based-app (Programmatic Streaming to Files)
 
-**Location**: `/Users/D056076/temp/JFR-Test/apps/jfr-jdk-api-based-app/`  
+**Location**: `apps/jfr-jdk-api-based-app/`
 **Port**: 8080
 
-An advanced Spring Boot application using the `jdk.jfr` API for programmatic control.
+An advanced Spring Boot application using the `jdk.jfr` API for continuous monitoring with automatic file exports.
 
 **Key Characteristics**:
 
 - Continuous JFR recording (starts automatically)
-- Periodic exports every 15 seconds
+- Periodic exports every 15 seconds to `jfr-exports/`
 - Rolling buffer (15-second window)
 - REST API for monitoring
-- No external tools required
 
 **Running**:
 
@@ -77,353 +105,258 @@ cd apps/jfr-jdk-api-based-app
 - Status: `http://localhost:8080/api/jfr/status`
 - Health: `http://localhost:8080/api/jfr/health`
 
+---
+
+### 3. jfr-otel-logs-app (OTLP Logs Export)
+
+**Location**: `apps/jfr-otel-logs-app/`
+**Port**: 8080
+
+Streams JFR profiling events directly to an OpenTelemetry Collector via OTLP gRPC as log records. No local files are produced.
+
+**Key Characteristics**:
+
+- Continuous JFR recording
+- Exports ~20 event types to OTLP every 15 seconds
+- No local file storage — streams directly to collector
+- Requires the OTLP Collector (Docker)
+
+**Running**:
+
+```bash
+cd apps/jfr-otel-logs-app
+./docker/start-collector.sh   # start collector first
+./run.sh
+```
+
+**API Endpoints**:
+
+- Status: `http://localhost:8080/api/jfr/status`
+- Health: `http://localhost:8080/api/jfr/health`
+
+---
+
+### 4. jfr-otel-logs-based-file-upload-app (OTLP File Upload)
+
+**Location**: `apps/jfr-otel-logs-based-file-upload-app/`
+**Port**: 8080
+
+Similar to `jfr-otel-logs-app` but serializes JFR snapshots to a temporary file before uploading to OTLP, enabling a different transport path for environments where streaming is unavailable.
+
+**Key Characteristics**:
+
+- Writes a temporary `.jfr` file, uploads it as OTLP logs, then deletes it
+- Same event coverage as `jfr-otel-logs-app`
+- Requires the OTLP Collector (Docker)
+
+**Running**:
+
+```bash
+cd apps/jfr-otel-logs-based-file-upload-app
+./docker/start-collector.sh
+./run.sh
+```
+
+**API Endpoints**:
+
+- Status: `http://localhost:8080/api/jfr/status`
+- Health: `http://localhost:8080/api/jfr/health`
+
+---
+
+### 5. jfr-otel-profiles-app (OTLP Profiles Signal)
+
+**Location**: `apps/jfr-otel-profiles-app/`
+**Port**: 8080
+
+Exports JFR `ExecutionSample` events as the native OpenTelemetry **profiles** signal (not logs). Uses the `opentelemetry-java` 1.68.0-alpha profiles API shim.
+
+**Key Characteristics**:
+
+- Exports only `jdk.ExecutionSample` events (method profiling)
+- Uses the OTLP profiles signal (`ExportProfilesServiceRequest`)
+- 10 ms sampling period
+- Requires the OTLP Collector with profiles support (Docker)
+
+**Running**:
+
+```bash
+cd apps/jfr-otel-profiles-app
+./docker/start-collector.sh
+./run.sh
+```
+
+**API Endpoints**:
+
+- Status: `http://localhost:8080/api/jfr/status`
+- Health: `http://localhost:8080/api/jfr/health`
+
+---
+
 ## Feature Comparison
 
-| Feature | jfr-profiler-based-app | jfr-jdk-api-based-app |
-| --------- | -------------------- | ---------------- |
-| **JFR Control** | External (JVM flags, jcmd, JMC) | Programmatic (jdk.jfr API) |
-| **Recording Start** | Manual or at JVM startup | Automatic on app startup |
-| **Continuous Recording** | Requires manual setup | Built-in |
-| **Periodic Exports** | Not supported | Every 15 seconds |
-| **File Management** | Manual | Automatic with timestamps |
-| **REST API** | Basic (Spring Actuator) | Custom JFR status endpoints |
-| **Rolling Buffer** | Manual configuration | Built-in (15 seconds) |
-| **Use Case** | On-demand profiling | Continuous monitoring |
-| **Complexity** | Simple | More complex |
-| **Best For** | Interactive analysis | Automated monitoring |
+| Feature | profiler-based | jdk-api-based | otel-logs | otel-logs-file-upload | otel-profiles |
+|---|---|---|---|---|---|
+| **JFR Control** | External (jcmd/JMC) | Programmatic API | Programmatic API | Programmatic API | Programmatic API |
+| **Recording Start** | Manual | Automatic | Automatic | Automatic | Automatic |
+| **Exports** | Manual / every 15s | Every 15s to files | Every 15s to OTLP | Every 15s to OTLP | Every 15s to OTLP |
+| **Output** | Local `.jfr` files | Local `.jfr` files | OTLP logs/gRPC | OTLP logs/gRPC | OTLP profiles/gRPC |
+| **Event Coverage** | All configured events | ~20 event types | ~20 event types | ~20 event types | ExecutionSample only |
+| **Docker needed** | No | No | Yes | Yes | Yes |
+| **Use Case** | Interactive profiling | Continuous file-based monitoring | Production APM/OTLP | Production APM/OTLP | OTel profiles signal |
 
-## Quick Start Guide
+## Monitored JFR Events
 
-### Option 1: Traditional Profiling (jfr-profiler-based-app)
+The file-based apps (`jfr-profiler-based-app`, `jfr-jdk-api-based-app`) and the OTLP logs apps capture the following events (configured in `apps/jfr-profiler-based-app/jfr-config.jfc`):
 
-```bash
-# Step 1: Start the application
-cd apps/jfr-profiler-based-app
-./run.sh
+- **jdk.ExecutionSample** — Method profiling (every 10 ms)
+- **jdk.CPULoad** — CPU usage (every 1 second)
+- **jdk.JavaThreadStatistics** — Thread statistics (every 1 second)
+- **jdk.GarbageCollection / YoungGarbageCollection / OldGarbageCollection** — GC events (threshold 0 ms)
+- **jdk.ObjectAllocationInNewTLAB / ObjectAllocationOutsideTLAB** — Allocation (with stack traces)
+- **jdk.ThreadStart / jdk.ThreadEnd** — Thread lifecycle (with stack traces)
+- **jdk.JavaExceptionThrow / jdk.JavaErrorThrow** — Exceptions and errors (with stack traces)
+- **jdk.FileRead / FileWrite / SocketRead / SocketWrite** — I/O (>10 ms, with stack traces)
+- **jdk.ClassLoad** — Class loading (with stack traces)
+- **jdk.Compilation** — JIT compilation (>100 ms)
+- **jdk.JavaMonitorEnter** — Monitor contention (>10 ms, with stack traces)
+- **jdk.ThreadPark** — Thread park/unpark (>10 ms, with stack traces)
+- **jdk.InitialEnvironmentVariable** — Environment variables (at recording start)
 
-# Step 2: In another terminal, find the PID
-jps -l | grep jfr-profiler-based-app
+`jfr-otel-profiles-app` captures only **jdk.ExecutionSample** (10 ms period).
 
-# Step 3: Start JFR recording
-jcmd <PID> JFR.start name=MyRecording settings=profile duration=60s
+## Architecture
 
-# Step 4: Generate some load
-curl http://localhost:8080/api/hello
-
-# Step 5: Stop and dump
-jcmd <PID> JFR.dump name=MyRecording filename=recording.jfr
-
-# Step 6: Analyze
-jfr print recording.jfr
-```
-
-### Option 2: Continuous Streaming (jfr-jdk-api-based-app)
-
-```bash
-# Step 1: Start the application
-cd apps/jfr-jdk-api-based-app
-./run.sh
-
-# Step 2: Verify it's running
-curl http://localhost:8080/api/jfr/status
-
-# Step 3: Wait 30 seconds for first export
-
-# Step 4: Check exported files
-ls -lh jfr-exports/
-
-# Step 5: Generate load (optional)
-./generate-load.sh
-
-# Step 6: Analyze any export
-jfr print jfr-exports/jfr-export-*.jfr
-```
-
-## Monitored JFR Events (jfr-jdk-api-based-app)
-
-The streaming application automatically captures the following events. This list
-mirrors the settings in the jfr-profiler-based-app's `jfr-config.jfc` file:
-
-- **jdk.ExecutionSample** - Method profiling (every 10 ms)
-- **jdk.CPULoad** - CPU usage (every 1 second)
-- **jdk.JavaThreadStatistics** - Thread statistics (every 1 second)
-- **jdk.GarbageCollection / YoungGarbageCollection / OldGarbageCollection** - GC events (threshold 0 ms)
-- **jdk.ObjectAllocationInNewTLAB / ObjectAllocationOutsideTLAB** - Allocation (with stack traces)
-- **jdk.ThreadStart** (with stack traces) **/ jdk.ThreadEnd** - Thread lifecycle
-- **jdk.JavaExceptionThrow** (threshold 0 ms) **/ jdk.JavaErrorThrow** - Exceptions and errors (with stack traces)
-- **jdk.FileRead / FileWrite / SocketRead / SocketWrite** - I/O (>10 ms threshold, with stack traces)
-- **jdk.ClassLoad** - Class loading (with stack traces)
-- **jdk.Compilation** - JIT compilation (>100 ms threshold)
-- **jdk.JavaMonitorEnter** - Monitor contention (>10 ms, with stack traces)
-- **jdk.ThreadPark** - Thread park/unpark (>10 ms, with stack traces)
-- **jdk.InitialEnvironmentVariable** - Environment variables (captured at recording start)
-
-## Architecture Comparison
-
-### Traditional JFR Architecture (jfr-profiler-based-app)
+### Traditional JFR (jfr-profiler-based-app)
 
 ```text
 ┌─────────────────┐
 │   Application   │
 │   (Port 8080)   │
 └────────┬────────┘
-         │
          │ JVM flags or jcmd
          ▼
 ┌─────────────────┐
 │   JFR Runtime   │
-│  (JVM built-in) │
 └────────┬────────┘
-         │
-         │ Manual dump
+         │ Manual dump / start-continuous-profiling.sh
          ▼
-┌─────────────────┐
-│   .jfr File     │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  JMC / jfr CLI  │
-│   (Analysis)    │
-└─────────────────┘
+┌─────────────────────────────┐
+│  apps/jfr-profiler-based-app│
+│  └── jfr-exports/           │
+└─────────────────────────────┘
 ```
 
-### Programmatic JFR Architecture (jfr-jdk-api-based-app)
+### Programmatic Streaming (jfr-jdk-api-based-app)
 
 ```text
-┌─────────────────────────────────┐
-│        Application              │
-│        (Port 8080)              │
-│  ┌───────────────────────────┐  │
-│  │  JfrJdkApiService         │  │
-│  │  • Continuous recording   │  │
-│  │  • Scheduled exports      │  │
-│  │  • Rolling buffer (15s)   │  │
-│  └───────────┬───────────────┘  │
-│              │                   │
-│              ▼                   │
-│  ┌───────────────────────────┐  │
-│  │  JFR Recording API        │  │
-│  │  (jdk.jfr.Recording)      │  │
-│  └───────────┬───────────────┘  │
-└──────────────┼───────────────────┘
-               │
-               │ Every 15s: recording.dump()
-               ▼
-┌───────────────────────────────┐
-│  ./jfr-exports/               │
-│  ├── jfr-export-...-0001.jfr │
-│  ├── jfr-export-...-0002.jfr │
-│  └── jfr-export-...-0003.jfr │
-└───────────────┬───────────────┘
-                │
+┌──────────────────────────────────┐
+│  Application (Port 8080)         │
+│  ┌────────────────────────────┐  │
+│  │  JfrJdkApiService          │  │
+│  │  • Continuous recording    │  │
+│  │  • Scheduled exports (15s) │  │
+│  │  • Rolling buffer (15s)    │  │
+│  └────────────┬───────────────┘  │
+└───────────────┼──────────────────┘
+                │ Every 15s
                 ▼
-┌───────────────────────────────┐
-│  Analysis Tools               │
-│  • JMC                        │
-│  • jfr CLI                    │
-│  • Custom processing          │
-└───────────────────────────────┘
+┌──────────────────────────────────┐
+│  apps/jfr-jdk-api-based-app/     │
+│  └── jfr-exports/                │
+└──────────────────────────────────┘
 ```
 
-## Use Cases
+### OTLP Streaming (jfr-otel-logs-app / jfr-otel-logs-based-file-upload-app / jfr-otel-profiles-app)
 
-### When to Use jfr-profiler-based-app
-
-✅ **One-time profiling sessions**
-
-- Investigating a specific performance issue
-- Analyzing application behavior during a particular operation
-- Deep-dive analysis with JMC GUI
-
-✅ **Interactive analysis**
-
-- Comparing different scenarios
-- Manual control over recording timing
-- Working with existing JFR tools and workflows
-
-✅ **Development and testing**
-
-- Profiling during development
-- Learning JFR concepts
-- Quick ad-hoc profiling
-
-### When to Use jfr-jdk-api-based-app
-
-✅ **Continuous monitoring**
-
-- Production environment monitoring
-- Always-on performance tracking
-- Historical performance analysis
-
-✅ **Automated data collection**
-
-- Building custom APM systems
-- Integrating with monitoring pipelines
-- Exporting to external storage (S3, Elasticsearch, etc.)
-
-✅ **Time-series analysis**
-
-- Tracking performance trends over time
-- Correlating with deployment events
-- Baseline performance tracking
-
-✅ **Automated alerting**
-
-- Processing events in real-time
-- Triggering alerts on anomalies
-- Custom metric extraction
+```text
+┌──────────────────────────────────┐
+│  Application (Port 8080)         │
+│  • Continuous JFR recording      │
+│  • Scheduled export (15s)        │
+└────────────────┬─────────────────┘
+                 │ OTLP gRPC (port 4317)
+                 ▼
+┌──────────────────────────────────┐
+│  OpenTelemetry Collector (Docker)│
+│  • Receives logs or profiles     │
+│  • Displays on console           │
+└──────────────────────────────────┘
+```
 
 ## Configuration
 
-### jfr-profiler-based-app Configuration
+All apps are configured via `src/main/resources/application.yaml`. Key settings:
 
-Edit `apps/jfr-profiler-based-app/src/main/resources/application.properties`:
+```yaml
+server:
+  port: 8080
 
-```properties
-server.port=8080
-spring.application.name=JFR Test Application
+jfr:
+  export:
+    interval:
+      seconds: 15
 ```
 
-### jfr-jdk-api-based-app Configuration
+Change the port if 8080 is already in use:
 
-Edit `apps/jfr-jdk-api-based-app/src/main/resources/application.properties`:
-
-```properties
-# Server port
-server.port=8080
-
-# Export directory
-jfr.export.directory=./jfr-exports
-
-# Export interval (seconds)
-jfr.export.interval.seconds=15
-
-# Recording buffer size (seconds)
-jfr.recording.max-age.seconds=15
+```yaml
+server:
+  port: 8081  # or any free port
 ```
 
 ## Analyzing JFR Files
 
-Both applications produce `.jfr` files that can be analyzed using:
+Applies to `jfr-profiler-based-app` and `jfr-jdk-api-based-app` which produce local `.jfr` files.
 
-### JDK Command-Line Tools
+### Command-Line Tools
 
 ```bash
-# Print summary
 jfr print recording.jfr
-
-# Print specific events
 jfr print --events jdk.CPULoad recording.jfr
-jfr print --events jdk.GarbageCollection recording.jfr
-
-# List all event types
-jfr print --events recording.jfr | grep "Event:" | sort -u
-
-# Convert to JSON
 jfr print --json recording.jfr > events.json
-
-# Print with categories
-jfr print --categories "Java Application" recording.jfr
 ```
 
 ### JDK Mission Control (JMC)
 
 1. Download from [Oracle](https://www.oracle.com/java/technologies/jdk-mission-control.html)
-2. Open JMC
-3. File → Open File → Select `.jfr` file
-4. Explore tabs:
-   - **General** - Overview and timeline
-   - **Memory** - Heap usage, GC analysis
-   - **Code** - Hot methods, compilation
-   - **Threads** - Thread activity, contention
-   - **I/O** - File and socket I/O
-   - **System** - CPU, processes
+2. File → Open File → select `.jfr` file
+3. Explore tabs: General, Memory, Code, Threads, I/O, System
 
-### Custom Processing
+### Python Analysis Tools
 
-```python
-# Example: Parse JFR JSON output
-import json
-
-with open('events.json') as f:
-    events = json.load(f)
-
-# Filter CPU load events
-cpu_events = [e for e in events if e['type'] == 'jdk.CPULoad']
-
-# Calculate average CPU
-avg_cpu = sum(e['machineTotal'] for e in cpu_events) / len(cpu_events)
-print(f"Average CPU: {avg_cpu:.2%}")
+```bash
+python3 python-scripts/analyze-snapshots.py apps/jfr-jdk-api-based-app/jfr-exports
+python3 python-scripts/visualize-jfr.py apps/jfr-jdk-api-based-app/jfr-exports/jfr-export-*.jfr
 ```
 
 ## Performance Considerations
 
-### jfr-profiler-based-app
-
-- JFR overhead: typically <2% CPU
-- No additional overhead from application code
-- File size depends on recording duration and event rate
-
-### jfr-jdk-api-based-app
-
-- JFR overhead: typically <2% CPU
-- Export overhead: ~100-200ms every 15 seconds
-- Disk space: 1-5 MB per export (depends on activity)
-- Memory: rolling buffer keeps only 15 seconds
+- JFR overhead: typically <2% CPU (designed for production)
+- `jfr-jdk-api-based-app` export overhead: ~100-200ms every 15 seconds
+- OTLP apps export overhead: ~200-500ms every 15 seconds (includes network)
+- `jfr-otel-profiles-app` is lightest: captures only ExecutionSample
 
 ## Troubleshooting
 
-### Port conflicts
+### Port already in use
 
-**jfr-profiler-based-app (port 8080)**:
-
-```properties
-# Change in application.properties
-server.port=8080
-```
-
-**jfr-jdk-api-based-app (port 8080)**:
-
-```properties
-# Change in application.properties
-server.port=8080
-```
+All apps default to 8080; only one can run at a time. Change the port in `application.yaml` if needed.
 
 ### JFR not available
-
-Check JFR support:
 
 ```bash
 java -XX:+UnlockDiagnosticVMOptions -XX:+PrintFlagsFinal | grep FlightRecorder
 ```
 
-JFR is included by default in:
-
-- OpenJDK 11+
-- Oracle JDK 11+
+JFR is included in OpenJDK 11+ and Oracle JDK 11+.
 
 ### Build issues
 
-Clean and rebuild:
-
 ```bash
-# jfr-profiler-based-app
-cd apps/jfr-profiler-based-app
-mvn clean install
-
-# jfr-jdk-api-based-app
-cd apps/jfr-jdk-api-based-app
+cd apps/<app-name>
 mvn clean install
 ```
-
-## Next Steps
-
-1. **Run both applications** to understand the differences
-2. **Compare the approaches** for your use case
-3. **Customize event types** in jfr-jdk-api-based-app
-4. **Integrate with monitoring** systems
-5. **Build custom analysis** tools
 
 ## References
 
@@ -431,7 +364,4 @@ mvn clean install
 - [JFR Event Reference](https://bestsolution-at.github.io/jfr-doc/)
 - [JDK Mission Control](https://www.oracle.com/java/technologies/jdk-mission-control.html)
 - [Spring Boot Documentation](https://spring.io/projects/spring-boot)
-
-## License
-
-These are demonstration applications for educational purposes.
+- [OpenTelemetry Java](https://github.com/open-telemetry/opentelemetry-java)

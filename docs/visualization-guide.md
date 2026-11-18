@@ -29,7 +29,7 @@ sudo apt install jmc
 jmc
 
 # Or open a file directly
-jmc -open jfr-snapshots/snapshot-001-*.jfr
+jmc -open apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
 ```
 
 ### What You'll See in JMC
@@ -57,33 +57,33 @@ jmc -open jfr-snapshots/snapshot-001-*.jfr
 
 ```bash
 # Summary of the recording
-jfr print jfr-snapshots/snapshot-001-*.jfr
+jfr print apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
 
 # Print specific event types
-jfr print --events jdk.ExecutionSample jfr-snapshots/snapshot-001-*.jfr
+jfr print --events jdk.ExecutionSample apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
 
 # Print with categories
-jfr print --categories "Java Application" jfr-snapshots/snapshot-001-*.jfr
+jfr print --categories "Java Application" apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
 
 # Export to JSON
-jfr print --json jfr-snapshots/snapshot-001-*.jfr > snapshot.json
+jfr print --json apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr > snapshot.json
 
 # Human-readable format
-jfr print --format default jfr-snapshots/snapshot-001-*.jfr | less
+jfr print --format default apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr | less
 ```
 
 ### B. JFR Summary
 
 ```bash
 # Get a quick summary
-jfr summary jfr-snapshots/snapshot-001-*.jfr
+jfr summary apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
 ```
 
 ### C. JFR Metadata
 
 ```bash
 # See all event types in the recording
-jfr metadata jfr-snapshots/snapshot-001-*.jfr
+jfr metadata apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
 ```
 
 ---
@@ -92,16 +92,14 @@ jfr metadata jfr-snapshots/snapshot-001-*.jfr
 
 ### JFR Report (HTML)
 
-The JDK includes a tool to generate HTML reports:
+The `shell-scripts/view-jfr.sh` script can generate a basic HTML report from any `.jfr` file (option 5 in its menu). For richer output use JMC.
 
 ```bash
-# Generate HTML report (JDK 17+)
-jfr print --json snapshot.jfr | jfr-report > report.html
+./shell-scripts/view-jfr.sh
+# → Option 5: Generate HTML Report
 
 # Then open in browser
-open report.html  # macOS
-xdg-open report.html  # Linux
-start report.html  # Windows
+open jfr-combined-report-*.html  # macOS
 ```
 
 ---
@@ -195,7 +193,13 @@ Download and install JMC for detailed visualization:
 - Easy to compare multiple recordings
 
 ### 3. Automate Analysis with Scripts
-Use the Python scripts I'll create below for size/event analysis
+
+Use the Python scripts in `python-scripts/` for size and event analysis:
+
+```bash
+python3 python-scripts/analyze-snapshots.py apps/jfr-profiler-based-app/jfr-exports
+python3 python-scripts/visualize-jfr.py apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
+```
 
 ---
 
@@ -213,12 +217,12 @@ Use the Python scripts I'll create below for size/event analysis
 2. **Try command line first**:
    ```bash
    # After generating snapshots:
-   jfr summary jfr-snapshots/*.jfr | head -50
+   jfr summary apps/jfr-profiler-based-app/jfr-exports/*.jfr | head -50
    ```
 
 3. **Open in JMC**:
    ```bash
-   jmc -open jfr-snapshots/snapshot-001-*.jfr
+   jmc -open apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
    ```
 
 ---

@@ -21,10 +21,10 @@ Creates ASCII charts showing:
 ### Method 3: Command Line (Built-in)
 ```bash
 # Quick summary
-jfr summary jfr-snapshots/snapshot-001-*.jfr
+jfr summary apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
 
 # Detailed events
-jfr print jfr-snapshots/snapshot-001-*.jfr | less
+jfr print apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr | less
 ```
 
 ---
@@ -42,7 +42,7 @@ https://jdk.java.net/jmc/
 
 ### Open a Recording
 ```bash
-jmc -open jfr-snapshots/snapshot-001-*.jfr
+jmc -open apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
 ```
 
 ### What You'll See in JMC
@@ -85,7 +85,7 @@ jmc -open jfr-snapshots/snapshot-001-*.jfr
 
 **Command Line:**
 ```bash
-jfr print --events jdk.ExecutionSample jfr-snapshots/snapshot-001-*.jfr | \
+jfr print --events jdk.ExecutionSample apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr | \
   grep "at " | sort | uniq -c | sort -rn | head -20
 ```
 
@@ -105,7 +105,7 @@ python3 python-scripts/visualize-jfr.py
 
 **Command Line:**
 ```bash
-jfr print --events jdk.ObjectAllocationInNewTLAB jfr-snapshots/snapshot-001-*.jfr | \
+jfr print --events jdk.ObjectAllocationInNewTLAB apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr | \
   grep "class" | sort | uniq -c | sort -rn | head -20
 ```
 
@@ -118,7 +118,7 @@ jfr print --events jdk.ObjectAllocationInNewTLAB jfr-snapshots/snapshot-001-*.jf
 
 **Command Line:**
 ```bash
-jfr print --events jdk.GarbageCollection jfr-snapshots/snapshot-001-*.jfr
+jfr print --events jdk.GarbageCollection apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
 ```
 
 **JMC:**
@@ -144,14 +144,12 @@ jfr print --events jdk.GarbageCollection jfr-snapshots/snapshot-001-*.jfr
 
 ### 1. Collect Baseline Data
 ```bash
-# Terminal 1: Run app
-./start-with-jfr.sh
+# Terminal 1: Run app with automatic snapshots
+cd apps/jfr-profiler-based-app
+./start-continuous-profiling.sh
 
-# Terminal 2: Collect snapshots
-python3 jfr-snapshot-manager.py
-
-# Terminal 3: Generate light load
-./load-generator.sh
+# Terminal 2: Generate light load
+./apps/jfr-profiler-based-app/load-generator.sh
 # Choose option 1 (Light load)
 ```
 
@@ -169,7 +167,7 @@ python3 python-scripts/visualize-jfr.py
 ### 3. Deep Dive in JMC
 ```bash
 # Open the largest snapshot
-jmc -open jfr-snapshots/snapshot-005-*.jfr
+jmc -open apps/jfr-profiler-based-app/jfr-exports/snapshot-005-*.jfr
 ```
 
 In JMC:
