@@ -6,5 +6,5 @@ logs/
 docker-compose.override.yaml
 docker-compose.override.yml
 
-# Local secrets (OTLP exporter credentials, etc.)
-.env
+# mTLS client certificate and private key for the OTLP exporter
+certs/

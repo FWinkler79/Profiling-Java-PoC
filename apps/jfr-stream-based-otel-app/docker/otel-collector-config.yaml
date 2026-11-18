@@ -1,10 +1,3 @@
-extensions:
-  # BASIC auth for the SAP Cloud Logging OTLP endpoint
-  basicauth/otlp:
-    client_auth:
-      username: "${env:SAP_CLS_OTLP_USERNAME}"
-      password: "${env:SAP_CLS_OTLP_PASSWORD}"
-
 receivers:
   otlp:
     protocols:
@@ -30,16 +23,15 @@ exporters:
   debug:
     verbosity: detailed
 
-  # OTLP exporter - sends data to SAP Cloud Logging
+  # OTLP exporter - sends data to SAP Cloud Logging (mTLS / client-certificate auth)
   otlp/sap-cloud-logging:
     endpoint: ingest-otlp-sf-d3d2b4b8-4f24-4d0c-acc3-749707ab1e15.cls-09.cloud.logs.services.sap.hana.ondemand.com:443
-    auth:
-      authenticator: basicauth/otlp
     tls:
       insecure: false
+      cert_file: /etc/otel/certs/ingest-client.crt
+      key_file: /etc/otel/certs/ingest-client.key
 
 service:
-  extensions: [basicauth/otlp]
   pipelines:
     logs:
       receivers: [otlp]

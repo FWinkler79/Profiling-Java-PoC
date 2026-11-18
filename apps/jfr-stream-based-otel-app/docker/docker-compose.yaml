@@ -1,12 +1,11 @@
 services:
   otel-collector:
-    image: otel/opentelemetry-collector:latest
+    image: otel/opentelemetry-collector-contrib:0.165.0
     container_name: jfr-otel-collector
     command: ["--config=/etc/otel-collector-config.yaml"]
-    env_file:
-      - .env
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+      - ./certs:/etc/otel/certs:ro
     ports:
       - "4317:4317"   # OTLP gRPC receiver
       - "4318:4318"   # OTLP HTTP receiver
