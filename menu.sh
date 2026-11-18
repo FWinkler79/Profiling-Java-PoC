@@ -211,7 +211,9 @@ case $choice in
         echo "Press Ctrl+C to stop the app"
         echo ""
         sleep 2
-        ./apps/jfr-stream-based-otel-app/run.sh
+        cd apps/jfr-stream-based-otel-app
+        ./run.sh
+        cd ../..
         ;;
 
     15)
