@@ -27,7 +27,7 @@
         │           ▼                          │
         │  ┌────────────────────────────────┐ │
         │  │  JFR Configuration             │ │
-        │  │  (jfr-config.jfc)              │ │
+        │  │  (apps/jfr-profiler-based-app/jfr-config.jfc)              │ │
         │  │                                │ │
         │  │  • Which events to capture     │ │
         │  │  • Sampling rates              │ │
@@ -87,7 +87,7 @@ Legend:
    ├─► GC Run ───────────► jdk.GarbageCollection
    └─► Thread Event ─────► jdk.ThreadStart/End
 
-2. Event Filtering (jfr-config.jfc)
+2. Event Filtering (apps/jfr-profiler-based-app/jfr-config.jfc)
    │
    ├─► Enabled? ────────► YES → Continue
    │                      NO  → Discard
@@ -135,7 +135,7 @@ PRIMARY (90% of impact):
 
 SECONDARY (10% of impact):
 ┌───────────────────────────────────────────────────────────────────┐
-│ JFR Configuration (jfr-config.jfc)                               │
+│ JFR Configuration (apps/jfr-profiler-based-app/jfr-config.jfc)                               │
 ├───────────────────────────────────────────────────────────────────┤
 │                                                                   │
 │ Execution Sampling Period:                                        │

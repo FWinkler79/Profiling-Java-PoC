@@ -61,7 +61,7 @@ Instead of using the unreleased `opentelemetry-sdk-extension-jfr-profiles` (not 
 ## Configuration
 
 ### Port
-**8082** (different from the other two apps: 8080, 8081)
+**8080** (same as all other apps)
 
 ### OTLP Endpoint
 Default: `http://localhost:4317` (configurable)
@@ -108,7 +108,7 @@ mvn clean package -DskipTests
 
 4. Check status:
    ```bash
-   curl http://localhost:8082/api/jfr/status
+   curl http://localhost:8080/api/jfr/status
    ```
 
 ## Documentation Updates

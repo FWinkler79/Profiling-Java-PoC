@@ -154,7 +154,7 @@ curl http://localhost:13133
 ```text
 ┌────────────────────────┐
 │  Spring Boot App       │
-│  (port 8083)           │
+│  (port 8080)           │
 │  - JFR Recording       │
 │  - OTLP Log Export     │
 └──────────┬─────────────┘

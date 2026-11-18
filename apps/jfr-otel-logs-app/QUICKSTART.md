@@ -57,7 +57,7 @@ cd apps/jfr-otel-logs-app
 # Wait 30 seconds for initial delay, then check status
 sleep 35
 
-curl http://localhost:8082/api/jfr/status
+curl http://localhost:8080/api/jfr/status
 ```
 
 Expected output:
@@ -93,7 +93,7 @@ You'll see JFR events being received and displayed as structured logs with attri
 - JFR continuously records application events
 - Every 15 seconds, a profile snapshot is exported to the OTLP backend
 - Check the backend (DevFiler) to see the received profiles
-- Monitor export statistics at `http://localhost:8082/api/jfr/status`
+- Monitor export statistics at `http://localhost:8080/api/jfr/status`
 
 ## Troubleshooting
 

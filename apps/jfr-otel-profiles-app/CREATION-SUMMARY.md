@@ -134,7 +134,7 @@ command:
 
 ### Port
 
-**8082** (same as the sibling `jfr-otel-logs-app`)
+**8080** (same as the sibling `jfr-otel-logs-app`)
 
 ### Key Config Keys
 

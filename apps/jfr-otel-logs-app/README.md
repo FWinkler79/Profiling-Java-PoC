@@ -14,7 +14,7 @@ This application demonstrates how to:
 When the official OpenTelemetry Profile Signal API becomes available in Maven Central, 
 you can upgrade to use native profile export format.
 
-**Port:** 8082
+**Port:** 8080
 
 ## Key Features
 
@@ -109,7 +109,7 @@ cd apps/jfr-otel-logs-app
 ```
 
 The application will:
-- Start on port 8082
+- Start on port 8080
 - Begin continuous JFR recording
 - Export profiles to the OTLP endpoint every 15 seconds (after 30-second initial delay)
 
@@ -117,10 +117,10 @@ The application will:
 
 ```bash
 # Check export status
-curl http://localhost:8082/api/jfr/status
+curl http://localhost:8080/api/jfr/status
 
 # Health check
-curl http://localhost:8082/api/jfr/health
+curl http://localhost:8080/api/jfr/health
 ```
 
 ## Configuration
@@ -129,7 +129,7 @@ All settings are in `src/main/resources/application.yaml`:
 
 ```yaml
 server:
-  port: 8082
+  port: 8080
 
 jfr:
   otlp:
@@ -214,7 +214,7 @@ java -jar target/jfr-otel-logs-app-1.0.0.jar \
 
 | Feature | jfr-profiler-based-app | jfr-stream-app | jfr-otel-logs-app |
 |---------|-------------------|----------------|---------------------------|
-| **Port** | 8080 | 8081 | 8082 |
+| **Port** | 8080 | 8080 | 8080 |
 | **JFR Control** | External tools | Programmatic | Programmatic |
 | **Recording** | On-demand | Continuous | Continuous |
 | **Output** | Manual files | Local files | OTLP export |

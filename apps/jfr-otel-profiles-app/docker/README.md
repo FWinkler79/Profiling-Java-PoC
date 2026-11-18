@@ -186,7 +186,7 @@ docker compose down
 3. Verify the app is sending:
 
    ```bash
-   curl http://localhost:8082/api/jfr/status
+   curl http://localhost:8080/api/jfr/status
    ```
 
    Look for `successful_exports` > 0 and `failed_exports` = 0.
@@ -261,7 +261,7 @@ service:
 ```text
 ┌─────────────────────────────┐
 │  jfr-otel-profiles-app      │
-│  (port 8082)                │
+│  (port 8080)                │
 │                             │
 │  RecordingStream            │
 │  (jdk.ExecutionSample)      │

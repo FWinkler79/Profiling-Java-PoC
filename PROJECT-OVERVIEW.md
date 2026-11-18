@@ -53,7 +53,7 @@ cd apps/jfr-profiler-based-app
 ### 2. JFR JDK API Application
 
 **Location**: `/Users/D056076/temp/JFR-Test/apps/jfr-jdk-api-based-app/`  
-**Port**: 8081
+**Port**: 8080
 
 An advanced Spring Boot application using the `jdk.jfr` API for programmatic control.
 
@@ -74,8 +74,8 @@ cd apps/jfr-jdk-api-based-app
 
 **API Endpoints**:
 
-- Status: `http://localhost:8081/api/jfr/status`
-- Health: `http://localhost:8081/api/jfr/health`
+- Status: `http://localhost:8080/api/jfr/status`
+- Health: `http://localhost:8080/api/jfr/health`
 
 ## Feature Comparison
 
@@ -125,7 +125,7 @@ cd apps/jfr-jdk-api-based-app
 ./run.sh
 
 # Step 2: Verify it's running
-curl http://localhost:8081/api/jfr/status
+curl http://localhost:8080/api/jfr/status
 
 # Step 3: Wait 30 seconds for first export
 
@@ -142,7 +142,7 @@ jfr print jfr-exports/jfr-export-*.jfr
 ## Monitored JFR Events (jfr-jdk-api-based-app)
 
 The streaming application automatically captures the following events. This list
-mirrors the settings in the root `jfr-config.jfc` file:
+mirrors the settings in the jfr-profiler-based-app's `jfr-config.jfc` file:
 
 - **jdk.ExecutionSample** - Method profiling (every 10 ms)
 - **jdk.CPULoad** - CPU usage (every 1 second)
@@ -193,7 +193,7 @@ mirrors the settings in the root `jfr-config.jfc` file:
 ```text
 ┌─────────────────────────────────┐
 │        Application              │
-│        (Port 8081)              │
+│        (Port 8080)              │
 │  ┌───────────────────────────┐  │
 │  │  JfrJdkApiService         │  │
 │  │  • Continuous recording   │  │
@@ -291,7 +291,7 @@ Edit `apps/jfr-jdk-api-based-app/src/main/resources/application.properties`:
 
 ```properties
 # Server port
-server.port=8081
+server.port=8080
 
 # Export directory
 jfr.export.directory=./jfr-exports
@@ -380,14 +380,14 @@ print(f"Average CPU: {avg_cpu:.2%}")
 
 ```properties
 # Change in application.properties
-server.port=8082
+server.port=8080
 ```
 
-**jfr-jdk-api-based-app (port 8081)**:
+**jfr-jdk-api-based-app (port 8080)**:
 
 ```properties
 # Change in application.properties
-server.port=8083
+server.port=8080
 ```
 
 ### JFR not available

@@ -9,7 +9,7 @@ raw `.jfr` binary payload over OTLP.
 > [Why this approach is wrong](#why-this-approach-is-wrong) before drawing conclusions from the behaviour you
 > observe.
 
-**Port:** 8083
+**Port:** 8080
 
 ## What this application does
 
@@ -120,8 +120,8 @@ jfr:
 ### Monitor status
 
 ```bash
-curl http://localhost:8083/api/jfr/status
-curl http://localhost:8083/api/jfr/health
+curl http://localhost:8080/api/jfr/status
+curl http://localhost:8080/api/jfr/health
 ```
 
 ## Configuration
@@ -130,7 +130,7 @@ All settings are in `src/main/resources/application.yaml`:
 
 ```yaml
 server:
-  port: 8083
+  port: 8080
 
 jfr:
   otlp:
@@ -210,7 +210,7 @@ java -jar target/jfr-otel-logs-based-file-upload-app-1.0.0.jar \
 
 | Feature | jfr-profiler-based-app | jfr-stream-app | jfr-otel-logs-based-file-upload-app |
 | ------- | ---------------------- | -------------- | -------------------------- |
-| **Port** | 8080 | 8081 | 8083 |
+| **Port** | 8080 | 8080 | 8080 |
 | **JFR Control** | External tools | Programmatic | Programmatic |
 | **Recording** | On-demand | Continuous | Continuous |
 | **Output** | Manual files | Local files | OTLP export (flawed) |
@@ -239,7 +239,7 @@ curl http://localhost:13133  # collector health check
 Check that the 30-second initial delay has passed, then verify:
 
 ```bash
-curl http://localhost:8083/api/jfr/status
+curl http://localhost:8080/api/jfr/status
 ```
 
 Look for `total_exports` incrementing. If it stays at 0, check application logs for recording startup errors.

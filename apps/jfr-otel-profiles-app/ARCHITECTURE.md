@@ -160,7 +160,7 @@ All settings in `application.yaml`:
 
 ```yaml
 server:
-  port: 8082
+  port: 8080
 
 jfr:
   otlp:

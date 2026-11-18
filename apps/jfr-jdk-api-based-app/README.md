@@ -62,7 +62,7 @@ jfr.export.interval.seconds=15
 jfr.recording.max-age.seconds=15
 
 # Server port
-server.port=8081
+server.port=8080
 ```
 
 ## API Endpoints
@@ -70,7 +70,7 @@ server.port=8081
 ### Check JFR Status
 
 ```bash
-curl http://localhost:8081/api/jfr/status
+curl http://localhost:8080/api/jfr/status
 ```
 
 Response:
@@ -87,13 +87,13 @@ Response:
 ### Health Check
 
 ```bash
-curl http://localhost:8081/api/jfr/health
+curl http://localhost:8080/api/jfr/health
 ```
 
 ## Monitored Events
 
 The application captures the following JFR event types. This list mirrors the
-settings in the root `jfr-config.jfc` file (keep the two in sync):
+settings in the jfr-profiler-based-app's `jfr-config.jfc` (keep the two in sync):
 
 - **jdk.ExecutionSample** - Method profiling (every 10 ms)
 - **jdk.CPULoad** - CPU usage (every 1 second)

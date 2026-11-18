@@ -71,7 +71,7 @@ Tests the application endpoints:
 - Formats JSON output for readability
 - Checks if the app is running
 
-### jfr-jdk-api-based-app (Programmatic streaming, port 8081)
+### jfr-jdk-api-based-app (Programmatic streaming, port 8080)
 
 #### Option 7: Build jfr-jdk-api-based-app application
 
@@ -88,12 +88,12 @@ Starts the streaming application:
 
 - Continuous JFR recording
 - Auto-exports every 15 seconds to `apps/jfr-jdk-api-based-app/jfr-exports/`
-- Runs on port 8081
+- Runs on port 8080
 - Press Ctrl+C to stop
 
 #### Option 9: Generate load
 
-Runs the load generator against port 8081:
+Runs the load generator against port 8080:
 
 - Creates traffic to produce profiling events
 - Requires the app to be running
@@ -112,7 +112,7 @@ Assembles all `.jfr` files in `apps/jfr-jdk-api-based-app/jfr-exports/` into a s
 - Uses `jfr assemble` command
 - Output saved to `apps/jfr-jdk-api-based-app/jfr-merged/`
 
-### jfr-otel-logs-app (OTLP streaming, port 8082)
+### jfr-otel-logs-app (OTLP streaming, port 8080)
 
 #### Option 12: Build jfr-otel-logs-app application
 
@@ -138,7 +138,7 @@ Starts the OTLP streaming application:
 
 - Continuous JFR recording
 - Exports profiling events to OTLP Collector every 15 seconds
-- Runs on port 8082
+- Runs on port 8080
 - **No local files** - streams directly to collector
 - View collector logs with option 15
 - Press Ctrl+C to stop
@@ -156,8 +156,8 @@ Shows real-time collector output:
 
 Queries multiple endpoints:
 
-- **App Health**: `http://localhost:8082/api/jfr/health`
-- **App Status**: `http://localhost:8082/api/jfr/status`
+- **App Health**: `http://localhost:8080/api/jfr/health`
+- **App Status**: `http://localhost:8080/api/jfr/status`
 - **Collector Health**: `http://localhost:13133` (collector's health endpoint)
 
 #### Option 17: Stop OTLP Collector
@@ -182,7 +182,7 @@ Launches interactive JFR file selector:
 
 Displays the JFR configuration file:
 
-- Shows first 50 lines of `jfr-config.jfc`
+- Shows first 50 lines of `apps/jfr-profiler-based-app/jfr-config.jfc`
 - Lists key settings (execution sampling, CPU load, GC events, etc.)
 - Used by `start-continuous-profiling.sh`
 
@@ -243,47 +243,15 @@ Exits the menu.
 4. Option 17 - Stop collector
 ```
 
-### Workflow 4: Compare All Three Apps
+### Workflow 4: Compare Apps Sequentially
 
-Run all three simultaneously (they use different ports):
-
-**Terminal 1:**
+Since all apps use port 8080, run one at a time. Use the menu to stop one app then start another:
 
 ```bash
 ./menu.sh
-→ Option 2 (jfr-profiler-based-app continuous profiling)
-```
-
-**Terminal 2:**
-
-```bash
-./menu.sh
-→ Option 13 (Start OTLP collector)
-→ Then option 14 (Run OTLP app)
-```
-
-**Terminal 3:**
-
-```bash
-./menu.sh
-→ Option 8 (Run jfr-jdk-api-based-app)
-```
-
-**Terminal 4:**
-
-```bash
-./menu.sh
-→ Option 15 (View collector logs)
-```
-
-**Terminal 5:**
-
-```bash
-# Generate load for all three
-./load-generator.sh                           # Port 8080
-./apps/jfr-jdk-api-based-app/generate-load.sh       # Port 8081
-# Port 8082 load generation (manual):
-for i in {1..100}; do curl http://localhost:8082/api/hello?name=Test$i; done
+→ Option 2 (jfr-profiler-based-app: continuous profiling) — then Ctrl+C when done
+→ Option 8 (jfr-jdk-api-based-app: streaming to files)   — then Ctrl+C when done
+→ Option 13, then 14 (jfr-otel-logs-app: OTLP streaming) — then Ctrl+C when done
 ```
 
 ## Menu Features
@@ -308,8 +276,8 @@ Pressing Enter re-runs `./menu.sh` to show the menu again.
 
 The menu calls these scripts:
 
-- `./start-continuous-profiling.sh` - Option 2
-- `./load-generator.sh` - Options 3, 9
+- `./apps/jfr-profiler-based-app/start-continuous-profiling.sh` - Option 2
+- `./apps/jfr-profiler-based-app/load-generator.sh` - Options 3, 9
 - `./merge-jfr-files.sh` - Options 4, 11
 - `./analyze-snapshots.py` - Option 5
 - `./view-jfr.sh` - Option 18
@@ -345,12 +313,10 @@ The app isn't started yet. Run the corresponding "Build" and "Run" options first
 
 ### "Port already in use"
 
-Another instance is running. Check:
+All apps use port 8080. Only one can run at a time. Check what's occupying it:
 
 ```bash
-lsof -i :8080  # jfr-profiler-based-app
-lsof -i :8081  # jfr-jdk-api-based-app
-lsof -i :8082  # jfr-otel-logs-app
+lsof -i :8080
 ```
 
 ### Docker errors (option 13)

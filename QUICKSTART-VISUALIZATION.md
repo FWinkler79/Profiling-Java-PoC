@@ -180,7 +180,7 @@ In JMC:
 
 ### 4. Optimize and Retry
 Based on findings:
-- Modify `jfr-config.jfc` to reduce sampling
+- Modify `apps/jfr-profiler-based-app/jfr-config.jfc` to reduce sampling
 - Adjust `maxage` if snapshots too large
 - Re-run and compare
 
@@ -243,7 +243,7 @@ brew install --cask jdk-mission-control  # macOS
 - File might be corrupted - collect a new one
 
 ### "No method profiling data"
-- Check `jfr-config.jfc` has `jdk.ExecutionSample` enabled
+- Check `apps/jfr-profiler-based-app/jfr-config.jfc` has `jdk.ExecutionSample` enabled
 - Ensure application was actually doing work
 - Try `/api/heavy` endpoint for more activity
 

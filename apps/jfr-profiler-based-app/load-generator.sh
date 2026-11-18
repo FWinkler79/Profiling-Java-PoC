@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Load Generator for JFR Test Application
+# Load Generator for jfr-profiler-based-app
 # Generates various types of load to observe snapshot size changes
 
 ENDPOINT_LIGHT="http://localhost:8080/api/hello"

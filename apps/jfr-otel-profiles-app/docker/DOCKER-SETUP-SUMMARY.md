@@ -126,7 +126,7 @@ curl http://localhost:13133
 ```text
 ┌────────────────────────┐
 │  Spring Boot App       │
-│  (port 8082)           │
+│  (port 8080)           │
 │  - RecordingStream     │
 │    jdk.ExecutionSample │
 │  - ProfileData export  │

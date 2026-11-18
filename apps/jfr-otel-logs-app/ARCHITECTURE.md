@@ -81,7 +81,7 @@ This document describes the architecture of the JFR OpenTelemetry Logs applicati
 **Configuration:**
 - `maxAge`: 15 seconds - only keeps recent events
 - `toDisk`: true - buffers to disk for reliability
-- Event types: Aligned with `jfr-config.jfc` at project root
+- Event types: Aligned with `apps/jfr-profiler-based-app/jfr-config.jfc`
 
 **Key Events Monitored:**
 ```java
@@ -193,7 +193,7 @@ All settings in `application.yaml`:
 
 ```yaml
 server:
-  port: 8082
+  port: 8080
 
 jfr:
   otlp:

@@ -20,27 +20,27 @@ echo "  4) Merge JFR snapshots into single file"
 echo "  5) Analyze existing snapshots"
 echo "  6) Test endpoints (port 8080)"
 echo ""
-echo "── jfr-jdk-api-based-app (programmatic streaming, port 8081) ───────────────────"
+echo "── jfr-jdk-api-based-app (programmatic streaming, port 8080) ───────────────────"
 echo "  7) Build jfr-jdk-api-based-app application"
 echo "  8) Run jfr-jdk-api-based-app (auto-exports every 15s)"
-echo "  9) Generate load (port 8081, requires app running)"
-echo " 10) Check stream status / health (port 8081)"
+echo "  9) Generate load (port 8080, requires app running)"
+echo " 10) Check stream status / health (port 8080)"
 echo " 11) Merge JFR exports into single file"
 echo ""
-echo "── jfr-otel-logs-app (OTLP streaming, port 8082) ───────────────"
+echo "── jfr-otel-logs-app (OTLP streaming, port 8080) ───────────────"
 echo " 12) Build jfr-otel-logs-app application"
 echo " 13) Start OTLP Collector (Docker)"
 echo " 14) Run jfr-otel-logs-app (streams to OTLP)"
 echo " 15) View OTLP Collector logs (live)"
-echo " 16) Check OTLP app status / health (port 8082)"
+echo " 16) Check OTLP app status / health (port 8080)"
 echo " 17) Stop OTLP Collector"
 echo ""
-echo "── jfr-otel-logs-based-file-upload-app (file-upload OTLP streaming, port 8083) ─────"
+echo "── jfr-otel-logs-based-file-upload-app (file-upload OTLP streaming, port 8080) ─────"
 echo " 21) Build jfr-otel-logs-based-file-upload-app application"
 echo " 22) Start OTLP Collector for file-upload app (Docker)"
 echo " 23) Run jfr-otel-logs-based-file-upload-app (streams to OTLP)"
 echo " 24) View OTLP Collector logs for file-upload app (live)"
-echo " 25) Check file-upload app status / health (port 8083)"
+echo " 25) Check file-upload app status / health (port 8080)"
 echo " 26) Stop OTLP Collector for file-upload app"
 echo ""
 echo "── Shared tools ─────────────────────────────────────────────────────────"
@@ -76,12 +76,12 @@ case $choice in
         echo "Press Ctrl+C to stop profiling and app"
         echo ""
         sleep 2
-        ./start-continuous-profiling.sh
+        ./apps/jfr-profiler-based-app/start-continuous-profiling.sh
         ;;
 
     3)
         echo ""
-        ./load-generator.sh
+        ./apps/jfr-profiler-based-app/load-generator.sh
         ;;
 
     4)
@@ -119,7 +119,7 @@ case $choice in
         echo "  http://localhost:8080/api/heavy"
         ;;
 
-    # ── jfr-jdk-api-based-app (programmatic streaming, port 8081) ──
+    # ── jfr-jdk-api-based-app (programmatic streaming, port 8080) ──
     7)
         echo ""
         echo "Building jfr-jdk-api-based-app application..."
@@ -137,7 +137,7 @@ case $choice in
         echo "This will:"
         echo "  • Start a continuous JFR recording"
         echo "  • Export snapshots every 15 seconds to apps/jfr-jdk-api-based-app/jfr-exports/"
-        echo "  • Run on port 8081"
+        echo "  • Run on port 8080"
         echo ""
         echo "Press Ctrl+C to stop the app"
         echo ""
@@ -147,23 +147,23 @@ case $choice in
 
     9)
         echo ""
-        echo "Generating load for jfr-jdk-api-based-app (port 8081)..."
+        echo "Generating load for jfr-jdk-api-based-app (port 8080)..."
         echo ""
         ./apps/jfr-jdk-api-based-app/generate-load.sh
         ;;
 
     10)
         echo ""
-        echo "Checking jfr-jdk-api-based-app status / health (port 8081)..."
+        echo "Checking jfr-jdk-api-based-app status / health (port 8080)..."
         echo ""
         echo "1. Health:"
         echo "---"
-        curl -s "http://localhost:8081/api/jfr/health" | python3 -m json.tool || echo "Error: Is the app running?"
+        curl -s "http://localhost:8080/api/jfr/health" | python3 -m json.tool || echo "Error: Is the app running?"
         echo ""
         echo ""
         echo "2. Status:"
         echo "---"
-        curl -s "http://localhost:8081/api/jfr/status" | python3 -m json.tool || echo "Error: Is the app running?"
+        curl -s "http://localhost:8080/api/jfr/status" | python3 -m json.tool || echo "Error: Is the app running?"
         ;;
 
     11)
@@ -177,7 +177,7 @@ case $choice in
         ./merge-jfr-files.sh apps/jfr-jdk-api-based-app/jfr-exports
         ;;
 
-    # ── jfr-otel-logs-app (OTLP streaming, port 8082) ──
+    # ── jfr-otel-logs-app (OTLP streaming, port 8080) ──
     12)
         echo ""
         echo "Building jfr-otel-logs-app application..."
@@ -211,7 +211,7 @@ case $choice in
         echo "This will:"
         echo "  • Start continuous JFR recording"
         echo "  • Export profiling events to OTLP Collector every 15s"
-        echo "  • Run on port 8082"
+        echo "  • Run on port 8080"
         echo "  • No local files - streams directly to collector"
         echo ""
         echo "View collector logs with option 15"
@@ -239,16 +239,16 @@ case $choice in
 
     16)
         echo ""
-        echo "Checking jfr-otel-logs-app status / health (port 8082)..."
+        echo "Checking jfr-otel-logs-app status / health (port 8080)..."
         echo ""
         echo "1. Health:"
         echo "---"
-        curl -s "http://localhost:8082/api/jfr/health" | python3 -m json.tool || echo "Error: Is the app running?"
+        curl -s "http://localhost:8080/api/jfr/health" | python3 -m json.tool || echo "Error: Is the app running?"
         echo ""
         echo ""
         echo "2. Status:"
         echo "---"
-        curl -s "http://localhost:8082/api/jfr/status" | python3 -m json.tool || echo "Error: Is the app running?"
+        curl -s "http://localhost:8080/api/jfr/status" | python3 -m json.tool || echo "Error: Is the app running?"
         echo ""
         echo ""
         echo "3. Collector Health:"
@@ -266,7 +266,7 @@ case $choice in
         echo "Collector stopped!"
         ;;
 
-    # ── jfr-otel-logs-based-file-upload-app (file-upload OTLP streaming, port 8083) ──
+    # ── jfr-otel-logs-based-file-upload-app (file-upload OTLP streaming, port 8080) ──
     21)
         echo ""
         echo "Building jfr-otel-logs-based-file-upload-app application..."
@@ -300,7 +300,7 @@ case $choice in
         echo "This will:"
         echo "  • Start continuous JFR recording"
         echo "  • Export profiling events to OTLP Collector every 15s"
-        echo "  • Run on port 8083"
+        echo "  • Run on port 8080"
         echo "  • No local files - streams directly to collector"
         echo ""
         echo "View collector logs with option 24"
@@ -328,16 +328,16 @@ case $choice in
 
     25)
         echo ""
-        echo "Checking jfr-otel-logs-based-file-upload-app status / health (port 8083)..."
+        echo "Checking jfr-otel-logs-based-file-upload-app status / health (port 8080)..."
         echo ""
         echo "1. Health:"
         echo "---"
-        curl -s "http://localhost:8083/api/jfr/health" | python3 -m json.tool || echo "Error: Is the app running?"
+        curl -s "http://localhost:8080/api/jfr/health" | python3 -m json.tool || echo "Error: Is the app running?"
         echo ""
         echo ""
         echo "2. Status:"
         echo "---"
-        curl -s "http://localhost:8083/api/jfr/status" | python3 -m json.tool || echo "Error: Is the app running?"
+        curl -s "http://localhost:8080/api/jfr/status" | python3 -m json.tool || echo "Error: Is the app running?"
         echo ""
         echo ""
         echo "3. Collector Health:"
@@ -363,11 +363,11 @@ case $choice in
 
     28)
         echo ""
-        echo "JFR Configuration (jfr-config.jfc):"
+        echo "JFR Configuration (apps/jfr-profiler-based-app/jfr-config.jfc):"
         echo "─────────────────────────────────────────────────────────────"
-        cat jfr-config.jfc | head -50
+        cat apps/jfr-profiler-based-app/jfr-config.jfc | head -50
         echo ""
-        echo "... (showing first 50 lines, open jfr-config.jfc to see full config)"
+        echo "... (showing first 50 lines, open apps/jfr-profiler-based-app/jfr-config.jfc to see full config)"
         echo ""
         echo "Key settings:"
         echo "  - Execution sampling: every 10ms"
@@ -376,7 +376,7 @@ case $choice in
         echo "  - Method allocations: enabled with stack traces"
         echo "  - I/O events: threshold 10ms"
         echo ""
-        echo "Used by: start-continuous-profiling.sh"
+        echo "  Used by: apps/jfr-profiler-based-app/start-continuous-profiling.sh"
         ;;
 
     29)

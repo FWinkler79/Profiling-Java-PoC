@@ -17,33 +17,57 @@ to use JFR for performance monitoring and profiling:
 ```text
 JFR-Test/
 ├── apps/
-│   ├── jfr-profiler-based-app/  # Traditional JFR (port 8080)
-│   │   ├── src/             # Spring Boot application
-│   │   ├── pom.xml          # Maven configuration
-│   │   ├── run.sh           # Start script
-│   │   ├── jfr-exports/     # Recorded snapshots (generated)
-│   │   ├── jfr-merged/      # Merged recordings (generated)
-│   │   └── README.md        # Detailed documentation
+│   ├── jfr-profiler-based-app/          # Traditional JFR (port 8080)
+│   │   ├── src/                         # Spring Boot application
+│   │   ├── pom.xml                      # Maven configuration
+│   │   ├── run.sh                       # Start script
+│   │   ├── start-continuous-profiling.sh # Auto-snapshot script
+│   │   ├── load-generator.sh            # Load generator
+│   │   ├── jfr-config.jfc              # JFR recording configuration
+│   │   ├── jfr-exports/                 # Recorded snapshots (generated)
+│   │   ├── jfr-merged/                  # Merged recordings (generated)
+│   │   └── README.md                    # Detailed documentation
 │   │
-│   ├── jfr-jdk-api-based-app/      # Streaming JFR (port 8081)
-│   │   ├── src/             # Spring Boot application
-│   │   ├── pom.xml          # Maven configuration
-│   │   ├── run.sh           # Start script
-│   │   ├── generate-load.sh # Load generator
-│   │   ├── jfr-exports/     # Exported snapshots (generated)
-│   │   ├── jfr-merged/      # Merged recordings (generated)
-│   │   ├── README.md        # Detailed documentation
-│   │   └── ARCHITECTURE.md  # Architecture details
+│   ├── jfr-jdk-api-based-app/           # Streaming JFR (port 8080)
+│   │   ├── src/                         # Spring Boot application
+│   │   ├── pom.xml                      # Maven configuration
+│   │   ├── run.sh                       # Start script
+│   │   ├── generate-load.sh             # Load generator
+│   │   ├── jfr-exports/                 # Exported snapshots (generated)
+│   │   ├── jfr-merged/                  # Merged recordings (generated)
+│   │   ├── README.md                    # Detailed documentation
+│   │   └── ARCHITECTURE.md             # Architecture details
 │   │
-│   └── jfr-otel-logs-app/  # OTLP Export (port 8082)
-│       ├── src/             # Spring Boot application
-│       ├── pom.xml          # Maven configuration
-│       ├── run.sh           # Start script
-│       ├── README.md        # Detailed documentation
-│       └── QUICKSTART.md    # Quick start guide
+│   ├── jfr-otel-logs-app/               # OTLP logs export (port 8080)
+│   │   ├── src/                         # Spring Boot application
+│   │   ├── pom.xml                      # Maven configuration
+│   │   ├── run.sh                       # Start script
+│   │   ├── docker/                      # OTLP Collector Docker setup
+│   │   ├── README.md                    # Detailed documentation
+│   │   └── QUICKSTART.md               # Quick start guide
+│   │
+│   ├── jfr-otel-logs-based-file-upload-app/  # OTLP file-upload (port 8080)
+│   │   ├── src/                         # Spring Boot application
+│   │   ├── pom.xml                      # Maven configuration
+│   │   ├── run.sh                       # Start script
+│   │   ├── docker/                      # OTLP Collector Docker setup
+│   │   ├── README.md                    # Detailed documentation
+│   │   └── QUICKSTART.md               # Quick start guide
+│   │
+│   └── jfr-otel-profiles-app/           # OTLP profiles export (port 8080)
+│       ├── src/                         # Spring Boot application
+│       ├── pom.xml                      # Maven configuration
+│       ├── run.sh                       # Start script
+│       ├── docker/                      # OTLP Collector Docker setup
+│       ├── README.md                    # Detailed documentation
+│       └── QUICKSTART.md               # Quick start guide
 │
-├── PROJECT-OVERVIEW.md      # Detailed comparison
-└── README.md               # This file
+├── merge-jfr-files.sh           # Merge JFR exports (general purpose)
+├── view-jfr.sh                  # Interactive JFR viewer (general purpose)
+├── analyze-snapshots.py         # Snapshot analyzer (general purpose)
+├── visualize-jfr.py             # JFR visualizer (general purpose)
+├── PROJECT-OVERVIEW.md          # Detailed comparison
+└── README.md                    # This file
 ```
 
 > Each application writes its JFR output **inside its own folder**:
@@ -66,8 +90,8 @@ The easiest way to use all three applications is through the interactive menu:
 The menu provides:
 
 - **Options 1-6**: jfr-profiler-based-app (traditional JFR, port 8080)
-- **Options 7-11**: jfr-jdk-api-based-app (streaming to files, port 8081)
-- **Options 12-17**: jfr-otel-logs-app (OTLP streaming, port 8082)
+- **Options 7-11**: jfr-jdk-api-based-app (streaming to files, port 8080)
+- **Options 12-17**: jfr-otel-logs-app (OTLP streaming, port 8080)
 - **Options 18-20**: Shared tools (visualization, configuration, cleanup)
 
 See [MENU.md](MENU.md) for detailed menu documentation.
@@ -94,7 +118,7 @@ cd apps/jfr-jdk-api-based-app
 ./run.sh
 
 # Check status
-curl http://localhost:8081/api/jfr/status
+curl http://localhost:8080/api/jfr/status
 
 # Wait 15 seconds, then check exports
 ls -lh jfr-exports/
@@ -112,7 +136,7 @@ cd apps/jfr-otel-logs-app
 ./run.sh
 
 # Check status
-curl http://localhost:8082/api/jfr/status
+curl http://localhost:8080/api/jfr/status
 
 # View collector logs
 cd docker
@@ -121,16 +145,16 @@ docker-compose logs -f
 
 ## Applications Comparison
 
-| Feature | jfr-profiler-based-app | jfr-jdk-api-based-app | jfr-otel-logs-app |
-| --------- | ------------------- | ---------------- | --------------------------- |
-| **Port** | 8080 | 8081 | 8082 |
-| **JFR Control** | External tools | Programmatic API | Programmatic API |
-| **Recording** | On-demand | Continuous | Continuous |
-| **Exports** | Manual | Automatic (every 15s) | Automatic (every 15s) |
-| **Output** | Manual files | Local files | OTLP/gRPC |
-| **Storage** | Manual | `./jfr-exports/` | None (streaming) |
-| **Use Case** | Interactive profiling | Continuous monitoring | Production APM/OTLP |
-| **Complexity** | Simple | Advanced | Advanced |
+| Feature | jfr-profiler-based-app | jfr-jdk-api-based-app | jfr-otel-logs-app | jfr-otel-logs-based-file-upload-app | jfr-otel-profiles-app |
+| --------- | ------------------- | ---------------- | --------------------------- | ----------------------------- | --------------------- |
+| **Port** | 8080 | 8080 | 8080 | 8080 | 8080 |
+| **JFR Control** | External tools | Programmatic API | Programmatic API | Programmatic API | Programmatic API |
+| **Recording** | On-demand | Continuous | Continuous | Continuous | Continuous |
+| **Exports** | Manual | Automatic (every 15s) | Automatic (every 15s) | Automatic (every 15s) | Automatic (every 15s) |
+| **Output** | Manual files | Local files | OTLP logs/gRPC | OTLP logs/gRPC (file upload) | OTLP profiles/gRPC |
+| **Storage** | Manual | `./jfr-exports/` | None (streaming) | None (streaming) | None (streaming) |
+| **Use Case** | Interactive profiling | Continuous monitoring | Production APM/OTLP | Production APM/OTLP | OTel profiles signal |
+| **Complexity** | Simple | Advanced | Advanced | Advanced | Advanced |
 
 ## Key Features
 
@@ -180,25 +204,24 @@ cd ../jfr-otel-logs-app
 mvn clean package
 ```
 
-## Running All Applications Simultaneously
+## Running Applications
 
-Since they use different ports, you can run all three at the same time:
+All applications use port 8080, so only one can run at a time. Start whichever app you want to work with:
 
 ```bash
-# Terminal 1
+# Traditional JFR
 cd apps/jfr-profiler-based-app
 ./run.sh
 
-# Terminal 2
+# Streaming to files
 cd apps/jfr-jdk-api-based-app
 ./run.sh
 
-# Terminal 3 (after starting an OTLP backend)
+# OTLP streaming (start collector first)
 cd apps/jfr-otel-logs-app
+./docker/start-collector.sh
 ./run.sh
 ```
-
-Then compare the approaches side-by-side!
 
 ## Analyzing JFR Data
 
@@ -275,12 +298,12 @@ Profiles are exported to the OTLP backend and can be viewed in:
 - `GET /api/hello` - Test endpoint
 - `GET /actuator/health` - Health check
 
-### jfr-jdk-api-based-app (port 8081)
+### jfr-jdk-api-based-app (port 8080)
 
 - `GET /api/jfr/status` - JFR recording status and statistics
 - `GET /api/jfr/health` - Health check
 
-### jfr-otel-logs-app (port 8082)
+### jfr-otel-logs-app (port 8080)
 
 - `GET /api/jfr/status` - JFR recording and OTLP export status
 - `GET /api/jfr/health` - Health check
@@ -299,11 +322,12 @@ See individual README files for details.
 
 ### Port already in use
 
-Change ports in `application.yaml`:
+All applications default to port 8080. Change it in the app's `application.yaml`:
 
-- jfr-profiler-based-app: default 8080
-- jfr-jdk-api-based-app: default 8081
-- jfr-otel-logs-app: default 8082
+```yaml
+server:
+  port: 8081  # or any free port
+```
 
 ### JFR not available
 

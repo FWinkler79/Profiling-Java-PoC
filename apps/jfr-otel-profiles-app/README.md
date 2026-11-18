@@ -8,7 +8,7 @@ approach: it records `jdk.ExecutionSample` JFR events via a live `RecordingStrea
 This is a sibling of `jfr-otel-logs-app`, which exports the same JFR data as OTLP *logs*. This app
 demonstrates the native profiles signal now available in OpenTelemetry.
 
-**Port:** 8082
+**Port:** 8080
 
 ## Overview
 
@@ -25,7 +25,7 @@ This application demonstrates how to:
 - `jdk.ExecutionSample` only — CPU method-profiling samples at 10 ms intervals
 - OTLP profiles signal — pprof-style `ProfileData` with dictionary-encoded stacks
 - One `ProfileData` flushed per export interval (default 15 seconds)
-- REST API for monitoring export status on port 8082
+- REST API for monitoring export status on port 8080
 
 ## Architecture
 
@@ -112,7 +112,7 @@ cd apps/jfr-otel-profiles-app
 
 The application will:
 
-- Start on port 8082
+- Start on port 8080
 - Begin continuous JFR `RecordingStream` for `jdk.ExecutionSample`
 - Export one `ProfileData` to the OTLP endpoint every 15 seconds (after 30-second initial delay)
 
@@ -120,10 +120,10 @@ The application will:
 
 ```bash
 # Check export status
-curl http://localhost:8082/api/jfr/status
+curl http://localhost:8080/api/jfr/status
 
 # Health check
-curl http://localhost:8082/api/jfr/health
+curl http://localhost:8080/api/jfr/health
 ```
 
 ## Configuration
@@ -132,7 +132,7 @@ All settings are in `src/main/resources/application.yaml`:
 
 ```yaml
 server:
-  port: 8082
+  port: 8080
 
 jfr:
   otlp:
@@ -223,7 +223,7 @@ java -jar target/jfr-otel-profiles-app-1.0.0.jar \
 
 | Feature             | jfr-otel-logs-app         | jfr-otel-profiles-app                         |
 | ------------------- | --------------------------------- | --------------------------------------------- |
-| **Port**            | 8082                              | 8082                                          |
+| **Port**            | 8080                              | 8080                                          |
 | **Signal**          | OTLP Logs                         | OTLP Profiles                                 |
 | **JFR Events**      | ~20 event types                   | `jdk.ExecutionSample` only                    |
 | **OTel version**    | 1.33.0                            | 1.68.0 / 1.68.0-alpha                         |
@@ -245,7 +245,7 @@ docker compose -f apps/jfr-otel-profiles-app/docker/docker-compose.yaml ps
 curl http://localhost:13133
 
 # Check export status
-curl http://localhost:8082/api/jfr/status
+curl http://localhost:8080/api/jfr/status
 ```
 
 ### No exports happening

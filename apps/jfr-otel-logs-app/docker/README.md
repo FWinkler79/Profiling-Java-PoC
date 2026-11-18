@@ -189,7 +189,7 @@ docker compose down
 3. Verify the app is sending:
 
    ```bash
-   curl http://localhost:8082/api/jfr/status
+   curl http://localhost:8080/api/jfr/status
    ```
 
    Look for `successful_exports` > 0 and `failed_exports` = 0.
@@ -324,7 +324,7 @@ services:
 
 ```text
 ┌─────────────────────────────┐
-│  JFR OTLP App (port 8082)   │
+│  JFR OTLP App (port 8080)   │
 │  - Records JFR events       │
 │  - Converts to OTLP logs    │
 └──────────────┬──────────────┘

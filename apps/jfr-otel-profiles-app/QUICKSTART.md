@@ -62,14 +62,14 @@ cd apps/jfr-otel-profiles-app
 ./run.sh
 ```
 
-The script builds the JAR (`target/jfr-otel-profiles-app-1.0.0.jar`) and starts the app on port 8082.
+The script builds the JAR (`target/jfr-otel-profiles-app-1.0.0.jar`) and starts the app on port 8080.
 
 ## Step 3: Verify It Is Working
 
 Wait ~30 seconds for the first export (initial delay), then check the status endpoint:
 
 ```bash
-curl http://localhost:8082/api/jfr/status
+curl http://localhost:8080/api/jfr/status
 ```
 
 Expected output:
@@ -142,7 +142,7 @@ docker compose -f apps/jfr-otel-profiles-app/docker/docker-compose.yaml ps
 curl http://localhost:13133
 
 # Export status
-curl http://localhost:8082/api/jfr/status
+curl http://localhost:8080/api/jfr/status
 ```
 
 ### Collector starts but profiles are not accepted
@@ -158,7 +158,7 @@ Check the application logs:
 ```bash
 # Look for ERROR lines in the application output
 # or inspect the status endpoint
-curl http://localhost:8082/api/jfr/status
+curl http://localhost:8080/api/jfr/status
 ```
 
 ## Next Steps

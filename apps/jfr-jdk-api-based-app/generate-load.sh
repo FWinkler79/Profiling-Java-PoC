@@ -6,11 +6,11 @@ echo "Generating load for JFR JDK API Application..."
 echo "This will call the API endpoints repeatedly to generate JFR events"
 echo ""
 
-BASE_URL="http://localhost:8081"
+BASE_URL="http://localhost:8080"
 
 # Check if the app is running
 if ! curl -s -f "$BASE_URL/api/jfr/health" > /dev/null 2>&1; then
-    echo "Error: Application is not running on port 8081"
+    echo "Error: Application is not running on port 8080"
     echo "Please start the application first with: ./run.sh"
     exit 1
 fi

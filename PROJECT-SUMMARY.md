@@ -57,7 +57,7 @@ An advanced Spring Boot application using the `jdk.jfr` API for continuous monit
 
 | Aspect | jfr-profiler-based-app | jfr-jdk-api-based-app |
 | -------- | -------------------- | ---------------- |
-| **Port** | 8080 | 8081 |
+| **Port** | 8080 | 8080 |
 | **JFR Control** | External (jcmd/JMC) | Programmatic API |
 | **Recording** | Manual start | Automatic |
 | **Exports** | On-demand dump | Every 15 seconds |
@@ -88,7 +88,7 @@ cd apps/jfr-jdk-api-based-app
 ./run.sh
 
 # Check status
-curl http://localhost:8081/api/jfr/status
+curl http://localhost:8080/api/jfr/status
 
 # Wait 30 seconds
 ls -lh jfr-exports/
@@ -117,7 +117,7 @@ jfr print jfr-exports/jfr-export-*.jfr
 
 ## Monitored Events (jfr-jdk-api-based-app)
 
-Mirrors the settings in the root `jfr-config.jfc` file:
+Mirrors the settings in the jfr-profiler-based-app's `jfr-config.jfc` file:
 
 - **jdk.ExecutionSample** - Method profiling (every 10 ms)
 - **jdk.CPULoad** - CPU usage (every 1 second)
@@ -208,7 +208,7 @@ Both approaches use the same underlying JFR technology:
 
 ## Testing Both Applications
 
-Since they use different ports (8080 and 8081), you can run both simultaneously to compare approaches side-by-side.
+Since all apps use port 8080, only one can run at a time. Stop the current app before starting another to compare approaches.
 
 ## Next Steps
 

@@ -190,7 +190,7 @@ docker compose down
 
 1. Check the collector is running: `docker compose ps`
 2. Check collector health: `curl http://localhost:13133`
-3. Verify the app is exporting: `curl http://localhost:8083/api/jfr/status` — look for `total_exports` > 0.
+3. Verify the app is exporting: `curl http://localhost:8080/api/jfr/status` — look for `total_exports` > 0.
 4. Check that the app's 30-second initial delay has passed.
 
 ### SAP Cloud Logging export fails with `InvalidArgument`
@@ -234,7 +234,7 @@ Then `docker compose restart`.
 ```text
 ┌─────────────────────────────┐
 │  JFR Upload Stream App      │
-│  port 8083                  │
+│  port 8080                  │
 │                             │
 │  Dumps .jfr slice every 15s │
 │  Sends as OTLP log          │

@@ -59,13 +59,13 @@ java -jar target/jfr-jdk-api-based-app-1.0.0.jar
 ### 1. Check it's running
 
 ```bash
-curl http://localhost:8081/api/jfr/health
+curl http://localhost:8080/api/jfr/health
 ```
 
 ### 2. Check status
 
 ```bash
-curl http://localhost:8081/api/jfr/status
+curl http://localhost:8080/api/jfr/status
 ```
 
 Expected output:
@@ -129,14 +129,14 @@ jfr.export.interval.seconds=15
 jfr.recording.max-age.seconds=15
 
 # Server port
-server.port=8081
+server.port=8080
 ```
 
 ## Key Features
 
 ### Monitored JFR Events
 
-Mirrors the root `jfr-config.jfc` settings:
+Mirrors the `jfr-profiler-based-app/jfr-config.jfc` settings:
 
 - Method profiling / Execution samples (every 10 ms)
 - CPU Load (every 1 second)
@@ -187,12 +187,12 @@ Mirrors the root `jfr-config.jfc` settings:
 
 ## Troubleshooting
 
-### Port 8081 already in use
+### Port 8080 already in use
 
 Change the port in `application.properties`:
 
 ```properties
-server.port=8082
+server.port=8081
 ```
 
 ### No events in exports

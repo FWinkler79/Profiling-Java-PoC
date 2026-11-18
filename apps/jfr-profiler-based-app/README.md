@@ -209,7 +209,7 @@ For **continuous monitoring** with automatic exports, see the `jfr-jdk-api-based
 Change the port in `src/main/resources/application.properties`:
 
 ```properties
-server.port=8082
+server.port=8081
 ```
 
 ### JFR not available
