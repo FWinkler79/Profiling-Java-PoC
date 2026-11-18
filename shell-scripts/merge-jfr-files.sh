@@ -4,15 +4,24 @@
 # Assembles all JFR files in a folder into a single recording file
 # using the JDK's built-in `jfr assemble` command.
 #
-# Usage: ./shell-scripts/merge-jfr-files.sh [source-folder]
-#   source-folder   Directory containing the .jfr files
-#                    (default: apps/jfr-profiler-based-app/jfr-exports)
+# Usage: ./shell-scripts/merge-jfr-files.sh <source-folder>
+#   source-folder   Directory containing the .jfr files, e.g.:
+#     apps/jfr-profiler-based-app/jfr-exports
+#     apps/jfr-jdk-api-based-app/jfr-exports
 #
 # The merged file is written to a sibling "jfr-merged" folder next to the
 # source, so each app's merged output stays within that app's directory
 # (e.g. source apps/jfr-jdk-api-based-app/jfr-exports -> apps/jfr-jdk-api-based-app/jfr-merged).
 
-SOURCE_DIR="${1:-apps/jfr-profiler-based-app/jfr-exports}"
+SOURCE_DIR="$1"
+
+if [ -z "$SOURCE_DIR" ]; then
+    echo "Usage: ./shell-scripts/merge-jfr-files.sh <source-folder>"
+    echo "  e.g.: ./shell-scripts/merge-jfr-files.sh apps/jfr-profiler-based-app/jfr-exports"
+    echo "        ./shell-scripts/merge-jfr-files.sh apps/jfr-jdk-api-based-app/jfr-exports"
+    exit 1
+fi
+
 OUTPUT_DIR="$(dirname "$SOURCE_DIR")/jfr-merged"
 
 if [ ! -d "$SOURCE_DIR" ]; then
