@@ -62,8 +62,9 @@ JFR-Test/
 │       ├── README.md                    # Detailed documentation
 │       └── QUICKSTART.md               # Quick start guide
 │
-├── merge-jfr-files.sh           # Merge JFR exports (general purpose)
-├── view-jfr.sh                  # Interactive JFR viewer (general purpose)
+├── shell-scripts/
+│   ├── merge-jfr-files.sh           # Merge JFR exports (general purpose)
+│   └── view-jfr.sh                  # Interactive JFR viewer (general purpose)
 ├── python-scripts/
 │   ├── analyze-snapshots.py         # Snapshot analyzer (general purpose)
 │   └── visualize-jfr.py             # JFR visualizer (general purpose)

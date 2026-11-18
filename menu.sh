@@ -92,7 +92,7 @@ case $choice in
         echo "a single file using 'jfr assemble'. Merged file will be saved to"
         echo "apps/jfr-profiler-based-app/jfr-merged/."
         echo ""
-        ./merge-jfr-files.sh apps/jfr-profiler-based-app/jfr-exports
+        ./shell-scripts/merge-jfr-files.sh apps/jfr-profiler-based-app/jfr-exports
         ;;
 
     5)
@@ -174,7 +174,7 @@ case $choice in
         echo "a single file using 'jfr assemble'. Merged file will be saved to"
         echo "apps/jfr-jdk-api-based-app/jfr-merged/."
         echo ""
-        ./merge-jfr-files.sh apps/jfr-jdk-api-based-app/jfr-exports
+        ./shell-scripts/merge-jfr-files.sh apps/jfr-jdk-api-based-app/jfr-exports
         ;;
 
     # ── jfr-otel-logs-app (OTLP streaming, port 8080) ──
@@ -358,7 +358,7 @@ case $choice in
     # ── Shared tools ──
     27)
         echo ""
-        ./view-jfr.sh
+        ./shell-scripts/view-jfr.sh
         ;;
 
     28)

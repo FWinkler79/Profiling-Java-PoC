@@ -4,7 +4,7 @@
 # Assembles all JFR files in a folder into a single recording file
 # using the JDK's built-in `jfr assemble` command.
 #
-# Usage: ./merge-jfr-files.sh [source-folder]
+# Usage: ./shell-scripts/merge-jfr-files.sh [source-folder]
 #   source-folder   Directory containing the .jfr files
 #                    (default: apps/jfr-profiler-based-app/jfr-exports)
 #

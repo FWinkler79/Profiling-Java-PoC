@@ -4,7 +4,7 @@
 
 ### Method 1: Interactive Menu (Easiest)
 ```bash
-./view-jfr.sh
+./shell-scripts/view-jfr.sh
 ```
 This launches an interactive menu with all visualization options.
 
@@ -130,7 +130,7 @@ jfr print --events jdk.GarbageCollection jfr-snapshots/snapshot-001-*.jfr
 
 **Using our tool:**
 ```bash
-./view-jfr.sh
+./shell-scripts/view-jfr.sh
 # Choose option 7 (Compare)
 ```
 
@@ -258,7 +258,7 @@ brew install --cask jdk-mission-control  # macOS
 
 1. **Practice with the tools:**
    ```bash
-   ./view-jfr.sh
+   ./shell-scripts/view-jfr.sh
    ```
 
 2. **Read the full guide:**
@@ -281,7 +281,7 @@ brew install --cask jdk-mission-control  # macOS
 
 | Task | Command |
 |------|---------|
-| Interactive menu | `./view-jfr.sh` |
+| Interactive menu | `./shell-scripts/view-jfr.sh` |
 | ASCII visualization | `python3 python-scripts/visualize-jfr.py` |
 | Quick summary | `jfr summary file.jfr` |
 | Open in JMC | `jmc -open file.jfr` |
