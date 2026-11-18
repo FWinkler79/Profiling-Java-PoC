@@ -19,6 +19,12 @@ jfr:
     interval:
       seconds: 15
 
+  # JFR Sampling Configuration
+  sample:
+    # ExecutionSample recording period in milliseconds
+    period:
+      millis: 10
+
   # Instrumentation Scope Configuration
   instrumentation:
     scope:
