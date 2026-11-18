@@ -14,7 +14,16 @@ mvn -version
 
 ## Step 1: Start an OTLP Backend
 
-For testing, use Elastic DevFiler:
+### Option A: Using Docker Compose (Easiest)
+
+```bash
+cd apps/jfr-stream-based-otel-app/docker
+./start-collector.sh
+```
+
+This starts an OpenTelemetry Collector that will display profiling logs in the console.
+
+### Option B: Using DevFiler
 
 ```bash
 # Using Docker
@@ -23,7 +32,9 @@ docker run -p 11000:11000 elastic/devfiler
 # Or download from: https://github.com/elastic/devfiler/
 ```
 
-## Step 2: Configure Endpoint
+## Step 2: Configure Endpoint (Skip if using Docker Compose)
+
+Only needed if using a custom backend. The app defaults to `http://localhost:4317` which works with the Docker Compose setup.
 
 Edit `src/main/resources/application.yaml`:
 
@@ -54,12 +65,28 @@ Expected output:
 ```json
 {
   "recording_state": "RUNNING",
-  "otlp_endpoint": "http://localhost:11000",
+  "otlp_endpoint": "http://localhost:4317",
   "total_exports": 1,
   "successful_exports": 1,
-  "failed_exports": 0
+  "failed_exports": 0,
+  "total_events_exported": 1234
 }
 ```
+
+## Step 5: View Profiling Logs
+
+If using Docker Compose, view the collector output:
+
+```bash
+cd docker
+docker-compose logs -f
+```
+
+You'll see JFR events being received and displayed as structured logs with attributes like:
+- Event type (jdk.ExecutionSample, jdk.CPULoad, etc.)
+- Thread information
+- Stack traces
+- Event-specific metrics
 
 ## What Happens Next
 

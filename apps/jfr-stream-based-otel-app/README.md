@@ -60,10 +60,34 @@ For testing, you can use:
 
 ## Quick Start
 
-### 1. Start an OTLP Backend (Example: DevFiler)
+### Option 1: With Docker Compose (Recommended)
+
+The easiest way to get started is using the included OpenTelemetry Collector:
 
 ```bash
-# Using Docker
+cd apps/jfr-stream-based-otel-app
+
+# Start the collector
+cd docker
+./start-collector.sh
+
+# In another terminal, start the app
+cd ..
+./run.sh
+
+# View collector logs to see profiling data
+cd docker
+docker-compose logs -f
+```
+
+See [docker/README.md](docker/README.md) for detailed Docker setup documentation.
+
+### Option 2: With Your Own OTLP Backend
+
+### Option 2: With Your Own OTLP Backend
+
+```bash
+# Using Docker (Example: DevFiler)
 docker run -p 11000:11000 elastic/devfiler
 
 # Or follow: https://github.com/elastic/devfiler/

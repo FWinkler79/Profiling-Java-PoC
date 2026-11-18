@@ -7,7 +7,9 @@ spring:
 
 # OTLP Configuration
 jfr:
-  # OpenTelemetry Collector or backend endpoint (gRPC)
+  # OpenTelemetry Collector endpoint (gRPC)
+  # For Docker: http://localhost:4317
+  # For local testing without Docker: http://localhost:4317
   otlp:
     endpoint: http://localhost:4317
 
