@@ -189,9 +189,9 @@ case $choice in
         echo "  • Listen on port 4317 (OTLP gRPC)"
         echo "  • Display received JFR profiling logs on console"
         echo ""
-        cd apps/jfr-stream-based-otel-app/docker
-        ./start-collector.sh
-        cd ../../..
+        cd apps/jfr-stream-based-otel-app
+        ./docker/start-collector.sh
+        cd ../..
         echo ""
         echo "Collector started! Run option 14 to start the app."
         ;;
