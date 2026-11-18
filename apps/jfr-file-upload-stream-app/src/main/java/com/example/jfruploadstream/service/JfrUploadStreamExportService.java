@@ -30,11 +30,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Service that continuously records JFR events and periodically exports them to an OTLP backend.
- * Uses OpenTelemetry Logs API to stream JFR event data as structured logs.
+ * Uses OpenTelemetry Logs API to send each 15-second JFR recording slice as a single log record
+ * whose body is the raw .jfr bytes (OTLP {@code bytes_value} — no base64 encoding).
  *
- * This is a practical implementation that works with current OpenTelemetry releases.
- * For production use with Profile Signal support, use the opentelemetry-sdk-extension-jfr-profiles
- * once it's released to Maven Central.
+ * The consumer receives an opaque .jfr blob per slice that can be written to disk and opened
+ * in JDK Mission Control for full post-hoc analysis.
  */
 @Service
 public class JfrUploadStreamExportService {
@@ -180,13 +180,19 @@ public class JfrUploadStreamExportService {
             long byteCount = exportRecordingAsLog(tempFile);
             totalBytesExported.addAndGet(byteCount);
 
-            // Force flush to ensure events are sent
-            loggerProvider.forceFlush().join(10, TimeUnit.SECONDS);
+            // Force flush and check whether it succeeded before counting as a success
+            boolean flushed = loggerProvider.forceFlush().join(10, TimeUnit.SECONDS).isSuccess();
 
             long durationMs = Duration.between(startTime, Instant.now()).toMillis();
-            successfulExports.incrementAndGet();
-            logger.info("Successfully exported {} bytes of JFR recording (slice #{}) to OTLP ({} ms)",
-                    byteCount, exportNum, durationMs);
+            if (flushed) {
+                successfulExports.incrementAndGet();
+                logger.info("Successfully exported {} bytes of JFR recording (slice #{}) to OTLP ({} ms)",
+                        byteCount, exportNum, durationMs);
+            } else {
+                failedExports.incrementAndGet();
+                logger.warn("Flush timed out or failed for JFR slice #{} ({} bytes, {} ms) — backend may not have received it",
+                        exportNum, byteCount, durationMs);
+            }
 
         } catch (Exception e) {
             failedExports.incrementAndGet();
