@@ -1,0 +1,44 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: JFR OTLP Profiles Application
+
+# OTLP Configuration
+jfr:
+  # OpenTelemetry Collector endpoint (gRPC)
+  # For Docker: http://localhost:4317
+  # For local testing without Docker: http://localhost:4317
+  otlp:
+    endpoint: http://localhost:4317
+
+  # JFR Export Configuration
+  export:
+    # How often to export JFR snapshots to OTLP (in seconds)
+    interval:
+      seconds: 15
+
+  # Instrumentation Scope Configuration
+  instrumentation:
+    scope:
+      name: jfr-otel-app
+      version: 1.0.0
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.example.jfrotelprofiles: INFO
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss} - %msg%n'
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
