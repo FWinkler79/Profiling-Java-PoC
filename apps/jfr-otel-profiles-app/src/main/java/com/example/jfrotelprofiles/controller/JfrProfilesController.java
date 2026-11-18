@@ -23,7 +23,7 @@ public class JfrProfilesController {
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> getStatus() {
         Map<String, Object> status = new HashMap<>();
-        status.put("stream_state", jfrProfilesExportService.getStreamState());
+        status.put("recording_state", jfrProfilesExportService.getRecordingState());
         status.put("otlp_endpoint", jfrProfilesExportService.getOtlpEndpoint());
         status.put("total_exports", jfrProfilesExportService.getExportCount());
         status.put("successful_exports", jfrProfilesExportService.getSuccessfulExports());

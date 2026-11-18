@@ -9,6 +9,7 @@ import io.opentelemetry.sdk.common.CompletableResultCode;
 import io.opentelemetry.sdk.common.InstrumentationScopeInfo;
 import io.opentelemetry.sdk.profiles.ProfileExporter;
 import io.opentelemetry.sdk.profiles.data.ProfileData;
+import io.opentelemetry.sdk.profiles.data.SampleData;
 import io.opentelemetry.sdk.resources.Resource;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -48,10 +50,16 @@ import org.springframework.stereotype.Service;
  * converterRef.get().accept(e)} while the scheduler thread periodically calls {@link
  * #swapConverter()}. The hand-off is a single {@link AtomicReference#getAndSet(Object)}: the
  * scheduler atomically takes the accumulated converter and installs a fresh one. No lock guards
- * {@code accept()} — at worst a sample straddling the swap lands in the next window, which is
- * acceptable for interval-based profiling. {@code SampleCompositionBuilder}/dictionary state is only
- * ever touched by the single stream thread for a given converter instance, so no additional
- * synchronization is required.
+ * {@code accept()}.
+ *
+ * <p>The swap itself is race-free, but the <em>drain</em> that follows is not: a callback that read
+ * the old converter reference just before the swap may still be executing {@code accept()} on the
+ * drained instance while the scheduler reads its samples. {@code SampleCompositionBuilder} is backed
+ * by a plain non-concurrent {@link java.util.HashMap}, so that overlap could throw {@link
+ * java.util.ConcurrentModificationException} or corrupt reader state. {@link #exportInterval()}
+ * closes this window by (1) sleeping {@value #DRAIN_SETTLE_MILLIS} ms after the swap so in-flight
+ * callbacks finish, and (2) reading the drained samples defensively with a retry so a transient CME
+ * is contained rather than thrown out of the scheduled method.
  */
 @Service
 public class JfrProfilesExportService {
@@ -59,6 +67,9 @@ public class JfrProfilesExportService {
   private static final Logger logger = LoggerFactory.getLogger(JfrProfilesExportService.class);
 
   private static final String EXECUTION_SAMPLE = "jdk.ExecutionSample";
+
+  /** Pause after an atomic converter swap to let any in-flight JFR callback finish {@code accept()}. */
+  private static final long DRAIN_SETTLE_MILLIS = 50;
 
   @Value("${jfr.otlp.endpoint:http://localhost:4317}")
   private String otlpEndpoint;
@@ -171,12 +182,33 @@ public class JfrProfilesExportService {
    * Swaps out the current window's converter and, if it has samples, dumps the raw payload, assembles
    * a {@link ProfileData}, and exports it. If there are no samples the export is skipped entirely —
    * the exporter is never touched.
+   *
+   * <p><strong>Drain race.</strong> The atomic swap installs a fresh converter, but a JFR callback
+   * thread that fetched the <em>old</em> reference before the swap may still be inside {@code
+   * drained.accept(e)} after we begin reading {@code drained} here. {@code SampleCompositionBuilder}
+   * is backed by a plain non-concurrent {@link java.util.HashMap}, so a concurrent writer + our
+   * reader could throw {@link java.util.ConcurrentModificationException} or corrupt state. We close
+   * the race two ways: (1) a short settle sleep after the swap lets in-flight callbacks finish, and
+   * (2) {@link #drainSamplesDefensively} reads the samples with a retry so a transient CME cannot
+   * escape this scheduled method.
    */
   @Scheduled(fixedDelayString = "${jfr.export.interval.seconds:15}000", initialDelay = 30000)
   public void exportInterval() {
     JfrExecutionSampleEventConverter drained = swapConverter();
 
-    int sampleCount = drained.getSamples().size();
+    // Let any JFR callback still inside drained.accept(e) (it read the old ref before the swap)
+    // finish before we read the drained converter's non-concurrent sample map.
+    settleAfterSwap();
+
+    List<SampleData> samples = drainSamplesDefensively(drained);
+    if (samples == null) {
+      // Persistent concurrent-modification failure; count it and skip this window rather than throw.
+      failedExports.incrementAndGet();
+      logger.warn("Skipping interval: could not safely drain converter samples");
+      return;
+    }
+
+    int sampleCount = samples.size();
     if (sampleCount == 0) {
       logger.debug("No ExecutionSamples in this interval; skipping export");
       return;
@@ -232,6 +264,37 @@ public class JfrProfilesExportService {
       }
     }
   }
+
+  /**
+   * Reads the drained converter's samples, tolerating a transient {@link
+   * ConcurrentModificationException} caused by a JFR callback still finishing {@code accept()}. Tries
+   * once, then after a brief pause tries again. Returns {@code null} only on a persistent failure, so
+   * the caller can skip the interval instead of letting the exception escape.
+   */
+  private List<SampleData> drainSamplesDefensively(JfrExecutionSampleEventConverter drained) {
+    try {
+      return List.copyOf(drained.getSamples());
+    } catch (ConcurrentModificationException first) {
+      logger.debug("Converter drain hit ConcurrentModificationException; retrying once", first);
+      settleAfterSwap();
+      try {
+        return List.copyOf(drained.getSamples());
+      } catch (ConcurrentModificationException second) {
+        logger.warn("Converter drain still failing after retry; skipping interval", second);
+        return null;
+      }
+    }
+  }
+
+  /** Sleeps briefly to let in-flight JFR callbacks drain; swallows interruption. */
+  private static void settleAfterSwap() {
+    try {
+      Thread.sleep(DRAIN_SETTLE_MILLIS);
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
 
   @PreDestroy
   public void stop() {
@@ -292,11 +355,17 @@ public class JfrProfilesExportService {
     return InstrumentationScopeInfo.builder(scopeName).setVersion(scopeVersion).build();
   }
 
-  public String getStreamState() {
-    if (recordingStream == null) {
+  /**
+   * Returns the JFR state of the parallel disk-backed recording (the one dumped each interval for
+   * the raw payload). The live {@link RecordingStream} exposes no queryable state, so the raw
+   * recording's state is the observable proxy for whether profiling is active. Returns {@code
+   * NOT_STARTED} before {@link #startStreaming()} has run.
+   */
+  public String getRecordingState() {
+    if (rawRecording == null) {
       return "NOT_STARTED";
     }
-    return rawRecording != null ? rawRecording.getState().name() : "RUNNING";
+    return rawRecording.getState().name();
   }
 
   public String getOtlpEndpoint() {
