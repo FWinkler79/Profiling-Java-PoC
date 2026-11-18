@@ -54,12 +54,6 @@
             <artifactId>opentelemetry-exporter-otlp</artifactId>
             <version>${opentelemetry.version}</version>
         </dependency>
-        <!-- Keep logs SDK temporarily until Task 4 removes the logs service -->
-        <dependency>
-            <groupId>io.opentelemetry</groupId>
-            <artifactId>opentelemetry-sdk-logs</artifactId>
-            <version>${opentelemetry.version}</version>
-        </dependency>
 
         <!-- OpenTelemetry Profiles (alpha) -->
         <dependency>

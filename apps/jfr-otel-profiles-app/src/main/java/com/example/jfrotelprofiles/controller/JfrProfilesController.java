@@ -1,6 +1,6 @@
 package com.example.jfrotelprofiles.controller;
 
-import com.example.jfrotelprofiles.service.JfrOtelExportService;
+import com.example.jfrotelprofiles.service.JfrProfilesExportService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,23 +12,23 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/jfr")
-public class JfrOtelController {
+public class JfrProfilesController {
 
     @Autowired
-    private JfrOtelExportService jfrOtelExportService;
+    private JfrProfilesExportService jfrProfilesExportService;
 
     /**
-     * Returns the status of the JFR recording and OTLP export statistics.
+     * Returns the status of the JFR profile streaming and OTLP export statistics.
      */
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> getStatus() {
         Map<String, Object> status = new HashMap<>();
-        status.put("recording_state", jfrOtelExportService.getRecordingState());
-        status.put("otlp_endpoint", jfrOtelExportService.getOtlpEndpoint());
-        status.put("total_exports", jfrOtelExportService.getExportCount());
-        status.put("successful_exports", jfrOtelExportService.getSuccessfulExports());
-        status.put("failed_exports", jfrOtelExportService.getFailedExports());
-        status.put("total_events_exported", jfrOtelExportService.getTotalEventsExported());
+        status.put("stream_state", jfrProfilesExportService.getStreamState());
+        status.put("otlp_endpoint", jfrProfilesExportService.getOtlpEndpoint());
+        status.put("total_exports", jfrProfilesExportService.getExportCount());
+        status.put("successful_exports", jfrProfilesExportService.getSuccessfulExports());
+        status.put("failed_exports", jfrProfilesExportService.getFailedExports());
+        status.put("total_samples_exported", jfrProfilesExportService.getTotalSamplesExported());
         return ResponseEntity.ok(status);
     }
 
@@ -39,7 +39,7 @@ public class JfrOtelController {
     public ResponseEntity<Map<String, String>> healthCheck() {
         Map<String, String> health = new HashMap<>();
         health.put("status", "UP");
-        health.put("service", "JFR OTLP Export Service");
+        health.put("service", "JFR OTLP Profiles Export Service");
         return ResponseEntity.ok(health);
     }
 }
