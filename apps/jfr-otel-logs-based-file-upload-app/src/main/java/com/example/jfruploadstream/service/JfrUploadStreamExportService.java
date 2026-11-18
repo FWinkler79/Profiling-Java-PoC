@@ -50,7 +50,7 @@ public class JfrUploadStreamExportService {
     @Value("${jfr.recording.max-age.seconds:15}")
     private int maxAgeSeconds;
 
-    @Value("${jfr.instrumentation.scope.name:jfr-file-upload-stream-app}")
+    @Value("${jfr.instrumentation.scope.name:jfr-otel-logs-based-file-upload-app}")
     private String scopeName;
 
     @Value("${jfr.instrumentation.scope.version:1.0.0}")

@@ -2,11 +2,11 @@
 
 ## What Was Created
 
-A third Spring Boot application has been successfully created: **jfr-file-upload-stream-app**
+A third Spring Boot application has been successfully created: **jfr-otel-logs-based-file-upload-app**
 
 ### Location
 ```
-apps/jfr-file-upload-stream-app/
+apps/jfr-otel-logs-based-file-upload-app/
 ```
 
 ### Key Features
@@ -71,7 +71,7 @@ Every 15 seconds (same as jfr-stream-app)
 
 ## How It Differs from jfr-stream-app
 
-| Aspect | jfr-stream-app | jfr-file-upload-stream-app |
+| Aspect | jfr-stream-app | jfr-otel-logs-based-file-upload-app |
 |--------|---------------|---------------------------|
 | **Storage** | Local files in `jfr-exports/` | None (streaming only) |
 | **Output Format** | JFR files | OTLP logs via gRPC |
@@ -83,7 +83,7 @@ Every 15 seconds (same as jfr-stream-app)
 
 ### Build Verification
 ```bash
-cd apps/jfr-file-upload-stream-app
+cd apps/jfr-otel-logs-based-file-upload-app
 mvn clean package -DskipTests
 ```
 ✅ Build successful
@@ -102,7 +102,7 @@ mvn clean package -DskipTests
 
 3. Run the application:
    ```bash
-   cd apps/jfr-file-upload-stream-app
+   cd apps/jfr-otel-logs-based-file-upload-app
    ./run.sh
    ```
 

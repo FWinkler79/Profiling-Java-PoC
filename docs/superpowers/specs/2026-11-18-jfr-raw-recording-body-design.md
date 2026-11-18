@@ -1,7 +1,7 @@
 # Design: Export raw JFR recording bytes as a single OTel log body
 
 Date: 2026-11-18
-App: `apps/jfr-file-upload-stream-app`
+App: `apps/jfr-otel-logs-based-file-upload-app`
 
 ## Intent & why
 

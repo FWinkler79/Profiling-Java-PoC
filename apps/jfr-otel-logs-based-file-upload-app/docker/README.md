@@ -1,7 +1,7 @@
 # Docker Setup for JFR OTLP Export
 
 This directory contains a Docker Compose configuration that runs an OpenTelemetry Collector alongside the
-`jfr-file-upload-stream-app`. Its primary purpose is to make two things observable:
+`jfr-otel-logs-based-file-upload-app`. Its primary purpose is to make two things observable:
 
 1. **The collector receives the binary records** — confirmed by the `debug` exporter printing them to stdout.
 2. **SAP Cloud Logging rejects them** — the `otlp/sap-cloud-logging` exporter fails with a permanent
@@ -60,7 +60,7 @@ The collector listens on:
 In another terminal:
 
 ```bash
-cd ..  # Back to the jfr-file-upload-stream-app directory
+cd ..  # Back to the jfr-otel-logs-based-file-upload-app directory
 ./run.sh
 ```
 
@@ -74,11 +74,11 @@ After the app's 30-second initial delay, you will see two things in the collecto
 2026-11-18T10:30:15.123Z  info  Logs  {...}
 ResourceLog #0
 Resource attributes:
-     -> service.name: Str(jfr-file-upload-stream-app)
+     -> service.name: Str(jfr-otel-logs-based-file-upload-app)
      -> service.version: Str(1.0.0)
      -> service.namespace: Str(jfr-profiling)
 ScopeLogs #0
-InstrumentationScope jfr-file-upload-stream-app 1.0.0
+InstrumentationScope jfr-otel-logs-based-file-upload-app 1.0.0
 LogRecord #0
 Body: Bytes(<raw .jfr binary, typically 100 KB – 1 MB>)
 Attributes:

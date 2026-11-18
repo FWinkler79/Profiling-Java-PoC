@@ -1,4 +1,4 @@
-# JFR File Upload Stream Application
+# JFR OpenTelemetry Logs File Upload Application
 
 A Spring Boot application that continuously records JFR events and periodically exports each recording slice as a
 raw `.jfr` binary payload over OTLP.
@@ -89,7 +89,7 @@ JFR Recording → Temporary Snapshot → Read raw bytes → Single OTLP log reco
 ### Option 1: With Docker Compose (Recommended for observing the failure)
 
 ```bash
-cd apps/jfr-file-upload-stream-app
+cd apps/jfr-otel-logs-based-file-upload-app
 
 # Start the collector
 cd docker
@@ -143,7 +143,7 @@ jfr:
       seconds: 15
   instrumentation:
     scope:
-      name: jfr-file-upload-stream-app
+      name: jfr-otel-logs-based-file-upload-app
       version: 1.0.0
 ```
 
@@ -199,16 +199,16 @@ mvn clean package
 ./run.sh
 
 # Or directly
-java -jar target/jfr-file-upload-stream-app-1.0.0.jar
+java -jar target/jfr-otel-logs-based-file-upload-app-1.0.0.jar
 
 # With a custom OTLP endpoint
-java -jar target/jfr-file-upload-stream-app-1.0.0.jar \
+java -jar target/jfr-otel-logs-based-file-upload-app-1.0.0.jar \
   --jfr.otlp.endpoint=http://my-collector:4317
 ```
 
 ## Comparison with Other Apps
 
-| Feature | jfr-profiler-based-app | jfr-stream-app | jfr-file-upload-stream-app |
+| Feature | jfr-profiler-based-app | jfr-stream-app | jfr-otel-logs-based-file-upload-app |
 | ------- | ---------------------- | -------------- | -------------------------- |
 | **Port** | 8080 | 8081 | 8083 |
 | **JFR Control** | External tools | Programmatic | Programmatic |

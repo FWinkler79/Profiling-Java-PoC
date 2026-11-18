@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: JFR File Upload Stream Application
+    name: JFR OpenTelemetry Logs File Upload Application
 
 # OTLP Configuration
 jfr:
@@ -27,7 +27,7 @@ jfr:
   # Instrumentation Scope Configuration
   instrumentation:
     scope:
-      name: jfr-file-upload-stream-app
+      name: jfr-otel-logs-based-file-upload-app
       version: 1.0.0
 
 # Logging Configuration

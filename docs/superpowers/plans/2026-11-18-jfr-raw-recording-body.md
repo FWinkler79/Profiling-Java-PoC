@@ -33,7 +33,7 @@
 ### Task 1: Upgrade OTel to 1.68.0 via BOM
 
 **Files:**
-- Modify: `apps/jfr-file-upload-stream-app/pom.xml`
+- Modify: `apps/jfr-otel-logs-based-file-upload-app/pom.xml`
 
 **Interfaces:**
 - Produces: all four OTel artifacts (`opentelemetry-api`, `-sdk`, `-exporter-otlp`, `-sdk-logs`) resolved at 1.68.0; `Value.of(byte[])` and `LogRecordBuilder.setBody(Value)` available at compile time
@@ -68,7 +68,7 @@
 
 - [ ] **Step 4: Verify BOM resolves correctly**
 
-  Run from `apps/jfr-file-upload-stream-app/`:
+  Run from `apps/jfr-otel-logs-based-file-upload-app/`:
   ```bash
   mvn dependency:tree | grep opentelemetry
   ```
@@ -84,7 +84,7 @@
 - [ ] **Step 6: Commit**
 
   ```bash
-  git add apps/jfr-file-upload-stream-app/pom.xml
+  git add apps/jfr-otel-logs-based-file-upload-app/pom.xml
   git commit -m "build: upgrade OpenTelemetry to 1.68.0 via BOM, remove protobuf-java dep"
   ```
 
@@ -93,8 +93,8 @@
 ### Task 2: Replace per-event export with raw-bytes log body
 
 **Files:**
-- Modify: `apps/jfr-file-upload-stream-app/src/main/java/com/example/jfruploadstream/service/JfrUploadStreamExportService.java`
-- Modify: `apps/jfr-file-upload-stream-app/src/main/java/com/example/jfruploadstream/controller/JfrUploadStreamController.java`
+- Modify: `apps/jfr-otel-logs-based-file-upload-app/src/main/java/com/example/jfruploadstream/service/JfrUploadStreamExportService.java`
+- Modify: `apps/jfr-otel-logs-based-file-upload-app/src/main/java/com/example/jfruploadstream/controller/JfrUploadStreamController.java`
 
 **Interfaces:**
 - Consumes: `Value.of(byte[])` from `io.opentelemetry.api.common.Value` (available after Task 1)
@@ -205,7 +205,7 @@
 
   ```bash
   grep -rn "totalEventsExported\|getTotalEventsExported\|RecordingFile\|RecordedEvent\|total_events_exported\|protobuf" \
-    apps/jfr-file-upload-stream-app/src apps/jfr-file-upload-stream-app/pom.xml
+    apps/jfr-otel-logs-based-file-upload-app/src apps/jfr-otel-logs-based-file-upload-app/pom.xml
   ```
   Expected: no output.
 
@@ -214,11 +214,11 @@
   ```bash
   mvn clean package -DskipTests
   ```
-  Expected: `BUILD SUCCESS`, jar at `target/jfr-file-upload-stream-app-1.0.0.jar`.
+  Expected: `BUILD SUCCESS`, jar at `target/jfr-otel-logs-based-file-upload-app-1.0.0.jar`.
 
 - [ ] **Step 10: Commit**
 
   ```bash
-  git add apps/jfr-file-upload-stream-app/src apps/jfr-file-upload-stream-app/pom.xml
+  git add apps/jfr-otel-logs-based-file-upload-app/src apps/jfr-otel-logs-based-file-upload-app/pom.xml
   git commit -m "feat: export raw JFR recording bytes as single OTel log body per slice"
   ```

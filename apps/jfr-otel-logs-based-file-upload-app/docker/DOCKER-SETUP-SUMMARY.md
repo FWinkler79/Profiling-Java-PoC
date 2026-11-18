@@ -114,10 +114,10 @@ The collector outputs JFR events as structured logs (and forwards them to SAP Cl
 ```text
 ResourceLog #0
 Resource attributes:
-     -> service.name: Str(jfr-file-upload-stream-app)
+     -> service.name: Str(jfr-otel-logs-based-file-upload-app)
      -> service.namespace: Str(jfr-profiling)
 ScopeLogs #0
-InstrumentationScope jfr-file-upload-stream-app 1.0.0
+InstrumentationScope jfr-otel-logs-based-file-upload-app 1.0.0
 LogRecord #0
 Body: Str(jdk.ExecutionSample)
 Attributes:

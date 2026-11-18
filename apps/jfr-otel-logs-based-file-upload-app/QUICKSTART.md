@@ -17,7 +17,7 @@ mvn -version
 ### Option A: Using Docker Compose (Easiest)
 
 ```bash
-cd apps/jfr-file-upload-stream-app/docker
+cd apps/jfr-otel-logs-based-file-upload-app/docker
 ./start-collector.sh
 ```
 
@@ -47,7 +47,7 @@ jfr:
 ## Step 3: Run the Application
 
 ```bash
-cd apps/jfr-file-upload-stream-app
+cd apps/jfr-otel-logs-based-file-upload-app
 ./run.sh
 ```
 

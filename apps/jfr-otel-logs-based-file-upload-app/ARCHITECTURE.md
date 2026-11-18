@@ -145,7 +145,7 @@ jdk.ThreadPark             // Thread parking
 
 **Resource Attributes:**
 ```java
-service.name              = jfr-file-upload-stream-app (configurable)
+service.name              = jfr-otel-logs-based-file-upload-app (configurable)
 service.version           = 1.0.0 (configurable)
 telemetry.sdk.name        = jfr-otel-exporter
 telemetry.sdk.language    = java
@@ -206,7 +206,7 @@ jfr:
       seconds: 15
   instrumentation:
     scope:
-      name: jfr-file-upload-stream-app
+      name: jfr-otel-logs-based-file-upload-app
       version: 1.0.0
 ```
 

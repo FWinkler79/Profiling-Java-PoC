@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# Build and run the JFR File Upload Stream Application
+# Build and run the JFR OpenTelemetry Logs File Upload Application
 
 set -e
 
-echo "Building JFR File Upload Stream Application..."
+echo "Building JFR OpenTelemetry Logs File Upload Application..."
 mvn clean package -DskipTests
 
 echo ""
-echo "Starting JFR File Upload Stream Application on port 8083..."
+echo "Starting JFR OpenTelemetry Logs File Upload Application on port 8083..."
 echo "OTLP endpoint: http://localhost:4317 (configurable via jfr.otlp.endpoint)"
 echo ""
 echo "Available endpoints:"
@@ -20,4 +20,4 @@ echo "JFR profiles will be exported to the OTLP endpoint every 15 seconds"
 echo "Press Ctrl+C to stop"
 echo ""
 
-java -jar target/jfr-file-upload-stream-app-1.0.0.jar
+java -jar target/jfr-otel-logs-based-file-upload-app-1.0.0.jar

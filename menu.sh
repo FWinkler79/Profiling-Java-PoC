@@ -35,10 +35,10 @@ echo " 15) View OTLP Collector logs (live)"
 echo " 16) Check OTLP app status / health (port 8082)"
 echo " 17) Stop OTLP Collector"
 echo ""
-echo "── jfr-file-upload-stream-app (file-upload OTLP streaming, port 8083) ─────"
-echo " 21) Build jfr-file-upload-stream-app application"
+echo "── jfr-otel-logs-based-file-upload-app (file-upload OTLP streaming, port 8083) ─────"
+echo " 21) Build jfr-otel-logs-based-file-upload-app application"
 echo " 22) Start OTLP Collector for file-upload app (Docker)"
-echo " 23) Run jfr-file-upload-stream-app (streams to OTLP)"
+echo " 23) Run jfr-otel-logs-based-file-upload-app (streams to OTLP)"
 echo " 24) View OTLP Collector logs for file-upload app (live)"
 echo " 25) Check file-upload app status / health (port 8083)"
 echo " 26) Stop OTLP Collector for file-upload app"
@@ -266,11 +266,11 @@ case $choice in
         echo "Collector stopped!"
         ;;
 
-    # ── jfr-file-upload-stream-app (file-upload OTLP streaming, port 8083) ──
+    # ── jfr-otel-logs-based-file-upload-app (file-upload OTLP streaming, port 8083) ──
     21)
         echo ""
-        echo "Building jfr-file-upload-stream-app application..."
-        cd apps/jfr-file-upload-stream-app
+        echo "Building jfr-otel-logs-based-file-upload-app application..."
+        cd apps/jfr-otel-logs-based-file-upload-app
         mvn clean package -DskipTests
         cd ../..
         echo ""
@@ -279,14 +279,14 @@ case $choice in
 
     22)
         echo ""
-        echo "Starting OTLP Collector for jfr-file-upload-stream-app (Docker)..."
+        echo "Starting OTLP Collector for jfr-otel-logs-based-file-upload-app (Docker)..."
         echo ""
         echo "This will:"
         echo "  • Start OpenTelemetry Collector in Docker"
         echo "  • Listen on port 4317 (OTLP gRPC)"
         echo "  • Display received JFR profiling logs on console"
         echo ""
-        cd apps/jfr-file-upload-stream-app
+        cd apps/jfr-otel-logs-based-file-upload-app
         ./docker/start-collector.sh
         cd ../..
         echo ""
@@ -295,7 +295,7 @@ case $choice in
 
     23)
         echo ""
-        echo "Starting jfr-file-upload-stream-app..."
+        echo "Starting jfr-otel-logs-based-file-upload-app..."
         echo ""
         echo "This will:"
         echo "  • Start continuous JFR recording"
@@ -308,27 +308,27 @@ case $choice in
         echo "Press Ctrl+C to stop the app"
         echo ""
         sleep 2
-        cd apps/jfr-file-upload-stream-app
+        cd apps/jfr-otel-logs-based-file-upload-app
         ./run.sh
         cd ../..
         ;;
 
     24)
         echo ""
-        echo "Viewing OTLP Collector logs for jfr-file-upload-stream-app (live)..."
+        echo "Viewing OTLP Collector logs for jfr-otel-logs-based-file-upload-app (live)..."
         echo ""
         echo "This will show JFR profiling events as they arrive."
         echo "Press Ctrl+C to stop viewing (collector keeps running)"
         echo ""
         sleep 2
-        cd apps/jfr-file-upload-stream-app/docker
+        cd apps/jfr-otel-logs-based-file-upload-app/docker
         docker-compose logs -f
         cd ../../..
         ;;
 
     25)
         echo ""
-        echo "Checking jfr-file-upload-stream-app status / health (port 8083)..."
+        echo "Checking jfr-otel-logs-based-file-upload-app status / health (port 8083)..."
         echo ""
         echo "1. Health:"
         echo "---"
@@ -347,8 +347,8 @@ case $choice in
 
     26)
         echo ""
-        echo "Stopping OTLP Collector for jfr-file-upload-stream-app..."
-        cd apps/jfr-file-upload-stream-app/docker
+        echo "Stopping OTLP Collector for jfr-otel-logs-based-file-upload-app..."
+        cd apps/jfr-otel-logs-based-file-upload-app/docker
         docker-compose down
         cd ../../..
         echo ""
@@ -424,10 +424,10 @@ case $choice in
             echo "✓ Deleted apps/jfr-jdk-api-based-app/jfr-merged/"
         fi
 
-        read -p "Delete jfr-file-upload-stream-app build artifacts (apps/jfr-file-upload-stream-app/target/)? [y/N]: " confirm
+        read -p "Delete jfr-otel-logs-based-file-upload-app build artifacts (apps/jfr-otel-logs-based-file-upload-app/target/)? [y/N]: " confirm
         if [[ $confirm =~ ^[Yy]$ ]]; then
-            rm -rf apps/jfr-file-upload-stream-app/target/
-            echo "✓ Deleted apps/jfr-file-upload-stream-app/target/"
+            rm -rf apps/jfr-otel-logs-based-file-upload-app/target/
+            echo "✓ Deleted apps/jfr-otel-logs-based-file-upload-app/target/"
         fi
 
         read -p "Stop and remove jfr-otel-logs-app OTLP Collector? [y/N]: " confirm
@@ -438,12 +438,12 @@ case $choice in
             echo "✓ Stopped jfr-otel-logs-app OTLP Collector"
         fi
 
-        read -p "Stop and remove jfr-file-upload-stream-app OTLP Collector? [y/N]: " confirm
+        read -p "Stop and remove jfr-otel-logs-based-file-upload-app OTLP Collector? [y/N]: " confirm
         if [[ $confirm =~ ^[Yy]$ ]]; then
-            cd apps/jfr-file-upload-stream-app/docker
+            cd apps/jfr-otel-logs-based-file-upload-app/docker
             docker-compose down
             cd ../../..
-            echo "✓ Stopped jfr-file-upload-stream-app OTLP Collector"
+            echo "✓ Stopped jfr-otel-logs-based-file-upload-app OTLP Collector"
         fi
 
         echo ""
