@@ -108,9 +108,8 @@ The menu provides:
 - **Options 7-11**: jfr-jdk-api-based-app (streaming to files, port 8080)
 - **Options 12-17**: jfr-otel-logs-app (OTLP logs streaming, port 8080)
 - **Options 21-26**: jfr-otel-logs-based-file-upload-app (OTLP file upload, port 8080)
+- **Options 31-36**: jfr-otel-profiles-app (OTLP profiles signal, port 8080)
 - **Options 27-29**: Shared tools (visualization, configuration, cleanup)
-
-The `jfr-otel-profiles-app` is run directly via `apps/jfr-otel-profiles-app/run.sh` (not yet in the menu).
 
 See [docs/menu.md](docs/menu.md) for detailed menu documentation.
 
@@ -248,7 +247,7 @@ mvn clean package
 
 ## Running Applications
 
-All applications use port 8080, so only one can run at a time. Use `menu.sh` to start any of the first four apps, or run directly:
+All applications use port 8080, so only one can run at a time. Use `menu.sh` to start any app, or run directly:
 
 ```bash
 # Traditional JFR

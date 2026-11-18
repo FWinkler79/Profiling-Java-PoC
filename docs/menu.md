@@ -1,6 +1,6 @@
 # Menu.sh - Interactive Control Panel
 
-The `menu.sh` script provides a unified interface for managing four of the five JFR applications and their associated tools. (`jfr-otel-profiles-app` is run directly via its own `run.sh`.)
+The `menu.sh` script provides a unified interface for managing all five JFR applications and their associated tools.
 
 ## Overview
 
@@ -8,13 +8,14 @@ The `menu.sh` script provides a unified interface for managing four of the five 
 ./menu.sh
 ```
 
-The menu is organized into five sections:
+The menu is organized into six sections:
 
 1. **jfr-profiler-based-app** (options 1-6) - Traditional JFR approach
 2. **jfr-jdk-api-based-app** (options 7-11) - Streaming to local files
 3. **jfr-otel-logs-app** (options 12-17) - Streaming to OTLP collector
 4. **jfr-otel-logs-based-file-upload-app** (options 21-26) - OTLP file-upload
-5. **Shared tools** (options 27-29) - Common utilities
+5. **jfr-otel-profiles-app** (options 31-36) - OTLP profiles signal
+6. **Shared tools** (options 27-29) - Common utilities
 
 ## Menu Options
 
@@ -168,6 +169,57 @@ Shuts down the Docker collector:
 - Stops and removes the container
 - Uses `docker-compose down`
 
+### jfr-otel-profiles-app (OTLP profiles signal, port 8080)
+
+#### Option 31: Build jfr-otel-profiles-app application
+
+Compiles the application using Maven.
+
+```bash
+cd apps/jfr-otel-profiles-app
+mvn clean package -DskipTests
+```
+
+#### Option 32: Start OTLP Collector for profiles app (Docker)
+
+Launches OpenTelemetry Collector in Docker:
+
+- Listens on port 4317 (OTLP gRPC)
+- Configured to receive JFR profiles
+- Start this **before** running the app
+
+#### Option 33: Run jfr-otel-profiles-app
+
+Starts the profiles streaming application:
+
+- Continuous JFR recording (ExecutionSample only, 10 ms period)
+- Exports profiles to OTLP Collector every 15 seconds
+- Runs on port 8080
+- Uses native OTel profiles signal (not logs)
+- Press Ctrl+C to stop
+
+#### Option 34: View OTLP Collector logs (live)
+
+Shows real-time collector output:
+
+- Displays received JFR profiles as they arrive
+- Press Ctrl+C to stop viewing (collector keeps running)
+
+#### Option 35: Check profiles app status / health
+
+Queries multiple endpoints:
+
+- **App Health**: `http://localhost:8080/api/jfr/health`
+- **App Status**: `http://localhost:8080/api/jfr/status`
+- **Collector Health**: `http://localhost:13133`
+
+#### Option 36: Stop OTLP Collector for profiles app
+
+Shuts down the Docker collector:
+
+- Stops and removes the container
+- Uses `docker-compose down`
+
 ### Shared Tools
 
 #### Option 27: Visualize JFR files (interactive)
@@ -193,12 +245,14 @@ Interactive cleanup with confirmations for each:
 - `apps/jfr-jdk-api-based-app/target/` (Maven build artifacts)
 - `apps/jfr-otel-logs-app/target/` (Maven build artifacts)
 - `apps/jfr-otel-logs-based-file-upload-app/target/` (Maven build artifacts)
+- `apps/jfr-otel-profiles-app/target/` (Maven build artifacts)
 - `apps/jfr-profiler-based-app/jfr-exports/` (recorded snapshots)
 - `apps/jfr-profiler-based-app/jfr-merged/` (merged files)
 - `apps/jfr-jdk-api-based-app/jfr-exports/` (exported snapshots)
 - `apps/jfr-jdk-api-based-app/jfr-merged/` (merged files)
 - jfr-otel-logs-app OTLP Collector (Docker container)
 - jfr-otel-logs-based-file-upload-app OTLP Collector (Docker container)
+- jfr-otel-profiles-app OTLP Collector (Docker container)
 
 Each item requires individual confirmation (`[y/N]`).
 
@@ -254,6 +308,7 @@ Since all apps use port 8080, run one at a time. Use the menu to stop one app th
 → Option 8 (jfr-jdk-api-based-app: streaming to files)   — then Ctrl+C when done
 → Option 13, then 14 (jfr-otel-logs-app: OTLP streaming) — then Ctrl+C when done
 → Option 22, then 23 (jfr-otel-logs-based-file-upload-app: OTLP file upload) — then Ctrl+C when done
+→ Option 32, then 33 (jfr-otel-profiles-app: OTLP profiles signal)       — then Ctrl+C when done
 ```
 
 ## Menu Features
@@ -288,6 +343,8 @@ The menu calls these scripts:
 - `./apps/jfr-otel-logs-app/run.sh` - Option 14
 - `./apps/jfr-otel-logs-based-file-upload-app/docker/start-collector.sh` - Option 22
 - `./apps/jfr-otel-logs-based-file-upload-app/run.sh` - Option 23
+- `./apps/jfr-otel-profiles-app/docker/start-collector.sh` - Option 32
+- `./apps/jfr-otel-profiles-app/run.sh` - Option 33
 - `./shell-scripts/visualize-jfr.sh <folder>` - Option 27
 
 ## Docker Integration
@@ -305,6 +362,12 @@ Options 13/15/17 and 22/24/26 use Docker Compose for the OTLP Collector in each 
 - `apps/jfr-otel-logs-based-file-upload-app/docker/docker-compose.yaml`
 - `apps/jfr-otel-logs-based-file-upload-app/docker/otel-collector-config.yaml`
 - `apps/jfr-otel-logs-based-file-upload-app/docker/start-collector.sh`
+
+### jfr-otel-profiles-app
+
+- `apps/jfr-otel-profiles-app/docker/docker-compose.yaml`
+- `apps/jfr-otel-profiles-app/docker/otel-collector-config.yaml`
+- `apps/jfr-otel-profiles-app/docker/start-collector.sh`
 
 ### Collector Ports Exposed
 
@@ -358,7 +421,7 @@ mvn clean install
 
 1. **Start with option 27** after generating recordings to visualize data
 2. **Use option 29 regularly** to clean up disk space from JFR exports
-3. **Run option 16** to verify the jfr-otel-logs-app is successfully exporting (option 25 for jfr-otel-logs-based-file-upload-app)
+3. **Run option 16** to verify the jfr-otel-logs-app is successfully exporting (option 25 for jfr-otel-logs-based-file-upload-app, option 35 for jfr-otel-profiles-app)
 4. **Keep option 15 open** in a dedicated terminal to watch events stream
 5. **Press Ctrl+C twice** if a foreground process doesn't stop immediately
 
