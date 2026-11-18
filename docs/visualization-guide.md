@@ -197,8 +197,8 @@ Download and install JMC for detailed visualization:
 Use the Python scripts in `python-scripts/` for size and event analysis:
 
 ```bash
-python3 python-scripts/analyze-snapshots.py apps/jfr-profiler-based-app/jfr-exports
-python3 python-scripts/visualize-jfr.py apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
+./shell-scripts/analyze-snapshots.sh apps/jfr-profiler-based-app/jfr-exports
+./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
 ```
 
 ---

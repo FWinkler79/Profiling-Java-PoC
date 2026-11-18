@@ -136,7 +136,7 @@ Change `maxage=15s` to `maxage=10s` or `maxage=5s`
 
 4. **Analyze results**:
    ```bash
-   python3 python-scripts/analyze-snapshots.py
+   ./shell-scripts/analyze-snapshots.sh <folder>
    ```
 
 5. **Modify `jfr-config.jfc`** with one change
@@ -225,7 +225,7 @@ cd apps/jfr-profiler-based-app
 ./start-continuous-profiling.sh
 
 # Analyze
-python3 python-scripts/analyze-snapshots.py apps/jfr-profiler-based-app/jfr-exports
+./shell-scripts/analyze-snapshots.sh apps/jfr-profiler-based-app/jfr-exports
 
 # View a snapshot
 jfr print apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr | less

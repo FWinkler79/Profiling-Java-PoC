@@ -326,8 +326,8 @@ jfr print --json recording.jfr > events.json
 ### Python Analysis Tools
 
 ```bash
-python3 python-scripts/analyze-snapshots.py apps/jfr-jdk-api-based-app/jfr-exports
-python3 python-scripts/visualize-jfr.py apps/jfr-jdk-api-based-app/jfr-exports/jfr-export-*.jfr
+./shell-scripts/analyze-snapshots.sh apps/jfr-jdk-api-based-app/jfr-exports
+./shell-scripts/visualize-jfr.sh apps/jfr-jdk-api-based-app/jfr-exports/jfr-export-*.jfr
 ```
 
 ## Performance Considerations

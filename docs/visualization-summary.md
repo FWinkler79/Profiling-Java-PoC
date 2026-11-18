@@ -21,7 +21,7 @@ After collecting JFR snapshots, visualize them with:
    → Great for beginners
 
 2. 🎨 ASCII Charts (No Install)
-   python3 python-scripts/visualize-jfr.py
+   ./shell-scripts/visualize-jfr.sh <file.jfr>
    → Terminal-friendly visualization
    → Shows methods, allocations, events
 
@@ -47,7 +47,7 @@ view-jfr.sh:
   ✓ JSON export
   ✓ Can launch JMC
 
-visualize-jfr.py:
+visualize-jfr.sh:
   ✓ Top 15 event types (bar chart)
   ✓ Hottest methods
   ✓ Memory allocation hotspots
@@ -77,7 +77,7 @@ Step 1: Quick Check
   → See if file has data
 
 Step 2: Visual Overview
-  python3 python-scripts/visualize-jfr.py
+  ./shell-scripts/visualize-jfr.sh <file.jfr>
   → Identify hot methods
 
 Step 3: Deep Analysis
@@ -123,8 +123,8 @@ FILES IN THIS PROJECT
 
 Visualization Tools:
   view-jfr.sh              Interactive menu
-  visualize-jfr.py         ASCII visualization
-  analyze-snapshots.py     Size analysis
+  visualize-jfr.sh        ASCII visualization
+  analyze-snapshots.sh    Size analysis
 
 Documentation:
   docs/visualization-guide.md           Complete guide

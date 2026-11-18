@@ -119,8 +119,8 @@ jfr print --events jdk.CPULoad apps/jfr-jdk-api-based-app/jfr-exports/jfr-export
 jfr print --json apps/jfr-jdk-api-based-app/jfr-exports/jfr-export-*.jfr > events.json
 
 # Python tools
-python3 python-scripts/analyze-snapshots.py apps/jfr-jdk-api-based-app/jfr-exports
-python3 python-scripts/visualize-jfr.py apps/jfr-jdk-api-based-app/jfr-exports/jfr-export-*.jfr
+./shell-scripts/analyze-snapshots.sh apps/jfr-jdk-api-based-app/jfr-exports
+./shell-scripts/visualize-jfr.sh apps/jfr-jdk-api-based-app/jfr-exports/jfr-export-*.jfr
 
 # GUI
 jmc -open apps/jfr-jdk-api-based-app/jfr-exports/jfr-export-*.jfr

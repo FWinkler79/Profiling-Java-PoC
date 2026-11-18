@@ -97,7 +97,7 @@ case $choice in
 
     5)
         echo ""
-        python3 python-scripts/analyze-snapshots.py apps/jfr-profiler-based-app/jfr-exports
+        ./shell-scripts/analyze-snapshots.sh apps/jfr-profiler-based-app/jfr-exports
         ;;
 
     6)
