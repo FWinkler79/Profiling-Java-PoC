@@ -1,18 +1,24 @@
-# Docker Setup Complete
+# Docker Setup Summary
 
-## What Was Created
+## What This Provides
 
-A complete Docker Compose setup for running an OpenTelemetry Collector that receives and displays JFR profiling logs.
+A Docker Compose setup that runs an OpenTelemetry Collector. The collector receives JFR profiling logs from the
+application, prints them to the console for inspection, and forwards them to **SAP Cloud Logging** over an
+mTLS-secured OTLP connection.
 
-### Files Created
+### Files
 
-```
+```text
 docker/
-├── .gitignore                      # Ignore logs and overrides
+├── .gitignore                      # Ignores logs, overrides, certs/, etc.
 ├── docker-compose.yaml             # Docker Compose configuration
 ├── otel-collector-config.yaml      # Collector pipeline configuration
+├── certs/                          # mTLS client cert + key (gitignored, not committed)
+│   ├── ingest-client.crt
+│   └── ingest-client.key
 ├── start-collector.sh              # Convenience startup script
-└── README.md                       # Comprehensive documentation
+├── README.md                       # Comprehensive documentation
+└── DOCKER-SETUP-SUMMARY.md         # This summary
 ```
 
 ## Configuration Details
@@ -20,42 +26,67 @@ docker/
 ### Docker Compose Setup
 
 **Service:** `jfr-otel-collector`
-- Image: `otel/opentelemetry-collector:0.91.0`
+
+- Image: `otel/opentelemetry-collector-contrib:0.165.0` (the `contrib` distribution is required)
 - Container name: `jfr-otel-collector`
 - Network: `jfr-otel-network` (bridge)
+- Volumes: collector config, plus `./certs` mounted read-only at `/etc/otel/certs`
 
 **Exposed Ports:**
-- `4317` - OTLP gRPC receiver (for the Java app)
-- `4318` - OTLP HTTP receiver (optional)
-- `8888` - Prometheus metrics endpoint
-- `13133` - Health check endpoint
+
+- `4317` — OTLP gRPC receiver (for the Java app)
+- `4318` — OTLP HTTP receiver (optional)
+- `8888` — Prometheus metrics endpoint
+- `13133` — Health check endpoint
 
 ### Collector Pipeline Configuration
 
 **Receivers:**
-- `otlp` - Receives OTLP logs via gRPC and HTTP
+
+- `otlp` — receives OTLP logs via gRPC and HTTP
 
 **Processors:**
-- `batch` - Batches logs every 5 seconds (1024 logs per batch)
-- `resource` - Adds `service.namespace: jfr-profiling` attribute
+
+- `resource` — adds the `service.namespace: jfr-profiling` attribute
+
+(A `batch` processor is defined in the config but not currently wired into the logs pipeline.)
 
 **Exporters:**
-- `logging` - Detailed console output (100% sampling)
-- `debug` - Very detailed output (1 in 200 sampling after first 5)
+
+- `debug` — detailed console output
+- `otlp/sap-cloud-logging` — forwards logs to SAP Cloud Logging over mTLS (client-certificate auth)
 
 **Pipeline:**
+
+```text
+otlp receiver → resource → [debug, otlp/sap-cloud-logging] exporters
 ```
-otlp receiver → batch → resource → [logging, debug] exporters → stdout
+
+### SAP Cloud Logging Export (mTLS)
+
+The OTLP exporter presents a client certificate instead of a username/password. The certificate and key live in
+`./certs` (gitignored) and are mounted into the container:
+
+```yaml
+exporters:
+  otlp/sap-cloud-logging:
+    endpoint: <your-instance>.ingest-otlp.cls-NN.cloud.logs.services.sap.hana.ondemand.com:443
+    tls:
+      insecure: false
+      cert_file: /etc/otel/certs/ingest-client.crt
+      key_file: /etc/otel/certs/ingest-client.key
 ```
+
+See `README.md` for how to provide the certificate files.
 
 ## Application Configuration
 
-The app's `application.yaml` is already configured:
+The app's `application.yaml` points at the collector:
 
 ```yaml
 jfr:
   otlp:
-    endpoint: http://localhost:4317  # Points to Docker collector
+    endpoint: http://localhost:4317  # Points to the Docker collector
 ```
 
 ## Usage
@@ -63,29 +94,28 @@ jfr:
 ### Quick Start
 
 ```bash
-# 1. Start collector
+# 1. Start the collector
 cd docker
 ./start-collector.sh
 
-# 2. Start app (in another terminal)
+# 2. Start the app (in another terminal)
 cd ..
 ./run.sh
 
 # 3. View logs
 cd docker
-docker-compose logs -f
+docker compose logs -f
 ```
 
-### What You'll See
+### What You Will See
 
-The collector will output JFR events as structured logs:
+The collector outputs JFR events as structured logs (and forwards them to SAP Cloud Logging):
 
-```
+```text
 ResourceLog #0
 Resource attributes:
      -> service.name: Str(jfr-otel-app)
      -> service.namespace: Str(jfr-profiling)
-     -> telemetry.sdk.language: Str(java)
 ScopeLogs #0
 InstrumentationScope jfr-otel-app 1.0.0
 LogRecord #0
@@ -100,69 +130,28 @@ Attributes:
 ### Management Commands
 
 ```bash
-# Start collector
+# Start the collector
 cd docker && ./start-collector.sh
 
-# View logs in real-time
-docker-compose logs -f
+# View logs in real time
+docker compose logs -f
 
 # View logs with timestamps
-docker-compose logs -f --timestamps
+docker compose logs -f --timestamps
 
-# Stop collector
-docker-compose down
+# Stop the collector
+docker compose down
 
-# Restart collector (after config changes)
-docker-compose restart
+# Restart the collector (after config changes)
+docker compose restart
 
 # Check collector health
 curl http://localhost:13133
 ```
 
-## Documentation Updates
-
-Updated the following files to reference Docker setup:
-
-1. **README.md** - Added "Option 1: With Docker Compose (Recommended)"
-2. **QUICKSTART.md** - Added Docker Compose as primary option
-3. **docker/README.md** - Comprehensive Docker documentation
-
-## Testing
-
-✅ Docker Compose configuration validated
-✅ No warnings or errors
-✅ Ready to use
-
-## Next Steps for Users
-
-1. **Basic Usage:**
-   ```bash
-   cd docker
-   ./start-collector.sh
-   # In another terminal
-   cd .. && ./run.sh
-   # In another terminal
-   cd docker && docker-compose logs -f
-   ```
-
-2. **Customize Output:**
-   - Edit `otel-collector-config.yaml` to adjust sampling
-   - Change verbosity from `detailed` to `normal`
-   - Modify processors for filtering
-
-3. **Add Backends:**
-   - Add additional exporters (Jaeger, Prometheus, etc.)
-   - See docker/README.md for examples
-
-4. **Production Deployment:**
-   - Add TLS configuration
-   - Configure authentication
-   - Set up persistent storage
-   - Use proper resource limits
-
 ## Architecture
 
-```
+```text
 ┌────────────────────────┐
 │  Spring Boot App       │
 │  (port 8082)           │
@@ -177,34 +166,29 @@ Updated the following files to reference Docker setup:
 │  Docker Container      │
 │  jfr-otel-collector    │
 │                        │
-│  ┌──────────────────┐ │
-│  │ OTLP Receiver    │ │
-│  │ :4317 :4318      │ │
-│  └────────┬─────────┘ │
+│  ┌──────────────────┐  │
+│  │ OTLP Receiver    │  │
+│  │ :4317 :4318      │  │
+│  └────────┬─────────┘  │
 │           │            │
-│  ┌────────▼─────────┐ │
-│  │ Batch Processor  │ │
-│  └────────┬─────────┘ │
+│  ┌────────▼─────────┐  │
+│  │ Resource Attrs   │  │
+│  └────────┬─────────┘  │
 │           │            │
-│  ┌────────▼─────────┐ │
-│  │ Resource Attrs   │ │
-│  └────────┬─────────┘ │
-│           │            │
-│  ┌────────▼─────────┐ │
-│  │ Logging Exporter │ │
-│  │ Debug Exporter   │ │
-│  └────────┬─────────┘ │
-└───────────┼───────────┘
-            │
-            ↓
-      Docker Logs
-      (console output)
+│  ┌────────▼─────────┐  │
+│  │ Debug Exporter   │  │
+│  │ OTLP Exporter    │  │
+│  └───┬───────────┬──┘  │
+└──────┼───────────┼─────┘
+       │           │
+       ↓           ↓
+  Docker Logs   SAP Cloud Logging
+  (console)     (ingest-otlp, mTLS)
 ```
 
 ## Benefits
 
-1. **Easy Setup** - One script to start everything
-2. **Immediate Feedback** - See profiling data in console
-3. **No External Dependencies** - Everything in Docker
-4. **Production-Ready Foundation** - Easy to extend to real backends
-5. **Educational** - See exactly what data is being sent
+1. **Immediate feedback** — see profiling data in the console via the debug exporter.
+2. **Real backend** — logs are shipped to SAP Cloud Logging over a secure mTLS connection.
+3. **Secrets stay out of git** — the client certificate and key live in a gitignored `certs/` directory.
+4. **Pinned, reproducible image** — the collector version is pinned rather than tracking `latest`.
