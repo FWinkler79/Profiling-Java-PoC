@@ -50,6 +50,27 @@ class JfrProfilesExportServiceTest {
     }
   }
 
+  /** A fake exporter whose {@link #export(Collection)} always reports failure. */
+  private static final class FailingExporter implements ProfileExporter {
+    final AtomicInteger exportCalls = new AtomicInteger(0);
+
+    @Override
+    public CompletableResultCode export(Collection<ProfileData> profiles) {
+      exportCalls.incrementAndGet();
+      return CompletableResultCode.ofFailure();
+    }
+
+    @Override
+    public CompletableResultCode flush() {
+      return CompletableResultCode.ofSuccess();
+    }
+
+    @Override
+    public CompletableResultCode shutdown() {
+      return CompletableResultCode.ofSuccess();
+    }
+  }
+
   @Test
   void test_atomicSwapReturnsConverterAndResetsCounter() throws Exception {
     CapturingExporter exporter = new CapturingExporter();
@@ -100,6 +121,41 @@ class JfrProfilesExportServiceTest {
         .as("no export attempt should have been counted")
         .isZero();
   }
+
+  @Test
+  void test_failedExportIsCountedAndDoesNotThrow() throws Exception {
+    FailingExporter exporter = new FailingExporter();
+    JfrProfilesExportService service = new JfrProfilesExportService(exporter);
+
+    // Feed real jdk.ExecutionSample events into the current converter so the export path runs
+    // (rather than the no-sample skip path).
+    JfrExecutionSampleEventConverter current = service.currentConverter();
+    List<RecordedEvent> events = recordExecutionSamples();
+    events.forEach(current::accept);
+    assertThat(current.getSamples().size())
+        .as("precondition: the recording should produce at least one ExecutionSample")
+        .isGreaterThan(0);
+
+    // One tick: the exporter reports failure. The scheduled method must swallow it, count the
+    // failure, and record no success.
+    service.exportInterval();
+
+    assertThat(exporter.exportCalls.get())
+        .as("export must have been attempted once (samples were present)")
+        .isEqualTo(1);
+    assertThat(service.getFailedExports())
+        .as("a failed export must increment failedExports")
+        .isGreaterThanOrEqualTo(1);
+    assertThat(service.getSuccessfulExports())
+        .as("a failed export must not increment successfulExports")
+        .isZero();
+  }
+
+  // NOTE: The drain-race retry path (snapshotDrained's CME-retry-then-skip) is deliberately NOT
+  // unit-tested here. Triggering it requires a real concurrent JFR callback mutating the drained
+  // converter's non-concurrent maps at exactly the right instant relative to the scheduler's read —
+  // an inherently timing-dependent race that cannot be forced deterministically. A test for it would
+  // be flaky, so it is intentionally omitted.
 
   /** Produces a short real JFR recording and returns all recorded jdk.ExecutionSample events. */
   private static List<RecordedEvent> recordExecutionSamples() throws Exception {

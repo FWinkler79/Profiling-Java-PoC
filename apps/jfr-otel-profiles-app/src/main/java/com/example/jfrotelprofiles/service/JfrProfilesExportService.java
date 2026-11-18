@@ -107,6 +107,20 @@ public class JfrProfilesExportService {
   private final AtomicLong failedExports = new AtomicLong(0);
   private final AtomicLong totalSamplesExported = new AtomicLong(0);
 
+  /**
+   * Wall-clock marker of the previous drain, used to measure the ACTUAL elapsed window. Because the
+   * scheduler fires with {@code fixedDelay}, the real time between drains is the configured interval
+   * plus the previous execution time, so the reported window must be measured rather than assumed.
+   * {@code prevDrainNanos} is a monotonic {@link System#nanoTime()} reading for computing the
+   * elapsed duration; {@code prevDrainEpochNanos} is the matching wall-clock epoch anchor (derived
+   * from {@link System#currentTimeMillis()}) used as the profile's {@code startEpochNanos}. Both are
+   * {@code 0} until the first drain, which falls back to the configured interval. Accessed only from
+   * the {@code synchronized} {@link #exportInterval()}.
+   */
+  private long prevDrainNanos = 0L;
+
+  private long prevDrainEpochNanos = 0L;
+
   /** Spring constructor. The exporter and stream are initialized in {@link #startStreaming()}. */
   public JfrProfilesExportService() {}
 
@@ -150,9 +164,14 @@ public class JfrProfilesExportService {
       recordingStream.startAsync();
 
       // Parallel disk-backed recording, dumped each interval to capture the raw JFR payload.
+      // Bound it to roughly one export window: without a maxAge, every dump() emits the ENTIRE
+      // accumulated recording (intervals 1..N), so disk usage and payload size grow without bound
+      // and interval N's embedded payload stops matching that interval's own samples. setMaxAge
+      // tracks the configured export interval so each dump reflects only recent data.
       rawRecording = new Recording();
       rawRecording.setName("ProfilesRawPayloadRecording");
       rawRecording.setToDisk(true);
+      rawRecording.setMaxAge(Duration.ofSeconds(exportIntervalSeconds));
       rawRecording.enable(EXECUTION_SAMPLE).withStackTrace().withPeriod(period);
       rawRecording.start();
 
@@ -197,9 +216,32 @@ public class JfrProfilesExportService {
    * live drained converter is never touched again; {@link ProfileAssembler#assemble} consumes only
    * the materialized snapshot. A persistent CME causes the interval to be skipped, not thrown.
    */
-  @Scheduled(fixedDelayString = "${jfr.export.interval.seconds:15}000", initialDelay = 30000)
-  public void exportInterval() {
+  @Scheduled(
+      fixedDelayString = "${jfr.export.interval.seconds:15}",
+      initialDelay = 30,
+      timeUnit = TimeUnit.SECONDS)
+  public synchronized void exportInterval() {
     JfrExecutionSampleEventConverter drained = swapConverter();
+
+    // Capture this drain's wall-clock boundary and compute the ACTUAL elapsed window since the
+    // previous drain. With fixedDelay scheduling the real gap is the interval plus the previous
+    // execution time, so a measured window is more honest than the configured interval. The first
+    // drain (no previous marker) falls back to the configured interval. Markers advance on EVERY
+    // tick (including skipped ones) so the next window measures from here.
+    long drainNanos = System.nanoTime();
+    long drainEpochNanos = System.currentTimeMillis() * 1_000_000L;
+    long configuredIntervalNanos = Duration.ofSeconds(exportIntervalSeconds).toNanos();
+    long windowDurationNanos;
+    long windowStartEpochNanos;
+    if (prevDrainNanos == 0L) {
+      windowDurationNanos = configuredIntervalNanos;
+      windowStartEpochNanos = drainEpochNanos - configuredIntervalNanos;
+    } else {
+      windowDurationNanos = drainNanos - prevDrainNanos;
+      windowStartEpochNanos = prevDrainEpochNanos;
+    }
+    prevDrainNanos = drainNanos;
+    prevDrainEpochNanos = drainEpochNanos;
 
     // Let any JFR callback still inside drained.accept(e) (it read the old ref before the swap)
     // finish before we read the drained converter's non-concurrent maps.
@@ -222,9 +264,8 @@ public class JfrProfilesExportService {
     long exportNum = exportCounter.incrementAndGet();
     Path tempFile = null;
     try {
-      long intervalNanos = Duration.ofSeconds(exportIntervalSeconds).toNanos();
-      long nowNanos = System.currentTimeMillis() * 1_000_000L;
-      long startEpochNanos = nowNanos - intervalNanos;
+      long startEpochNanos = windowStartEpochNanos;
+      long durationNanos = windowDurationNanos;
       long periodNanos = Duration.ofMillis(samplePeriodMillis).toNanos();
 
       byte[] rawJfrBytes = new byte[0];
@@ -242,7 +283,7 @@ public class JfrProfilesExportService {
               resource,
               scope,
               startEpochNanos,
-              intervalNanos,
+              durationNanos,
               periodNanos,
               rawJfrBytes);
 
