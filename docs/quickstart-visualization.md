@@ -6,19 +6,10 @@
 ```bash
 ./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports
 ```
-This launches an interactive menu with all visualization options.
+This launches an interactive menu with all visualization options (ASCII stats, JMC,
+CLI summary, JSON export, HTML report, snapshot comparison, and more).
 
-### Method 2: Python Visualizer (No Install Required)
-```bash
-./shell-scripts/visualize-jfr.sh <file.jfr>
-```
-Creates ASCII charts showing:
-- Event distribution
-- Hot methods
-- Allocation hotspots
-- File statistics
-
-### Method 3: Command Line (Built-in)
+### Method 2: Command Line (Built-in)
 ```bash
 # Quick summary
 jfr summary apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
@@ -95,10 +86,10 @@ jfr print --events jdk.ExecutionSample apps/jfr-profiler-based-app/jfr-exports/s
 3. Click "Flame Graph" view
 4. Wider bars = more CPU time
 
-**Python Script:**
+**ASCII stats:**
 ```bash
-./shell-scripts/visualize-jfr.sh <file.jfr>
-# Shows top methods automatically
+./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports
+# Choose option 1 (ASCII stats — shows top methods automatically)
 ```
 
 ### "What's allocating the most memory?"
@@ -157,11 +148,11 @@ Let it run for ~5 snapshots (75 seconds), then stop.
 
 ### 2. Quick Analysis
 ```bash
-# Check sizes first
-./shell-scripts/analyze-snapshots.sh <folder>
+# Check snapshot sizes and event counts
+./shell-scripts/analyze-snapshots.sh apps/jfr-profiler-based-app/jfr-exports
 
-# Visualize the latest
-./shell-scripts/visualize-jfr.sh <file.jfr>
+# Interactive visualization menu
+./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports
 ```
 
 ### 3. Deep Dive in JMC
@@ -279,8 +270,8 @@ brew install --cask jdk-mission-control  # macOS
 
 | Task | Command |
 |------|---------|
-| Interactive menu | `./shell-scripts/visualize-jfr.sh <folder>` |
-| ASCII visualization | `./shell-scripts/visualize-jfr.sh <file.jfr>` |
+| Interactive visualization menu | `./shell-scripts/visualize-jfr.sh <folder>` |
+| Snapshot size analysis | `./shell-scripts/analyze-snapshots.sh <folder>` |
 | Quick summary | `jfr summary file.jfr` |
 | Open in JMC | `jmc -open file.jfr` |
 | Export to JSON | `jfr print --json file.jfr > output.json` |

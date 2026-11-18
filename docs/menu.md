@@ -57,7 +57,7 @@ Assembles all `.jfr` files in `apps/jfr-profiler-based-app/jfr-exports/` into a 
 
 #### Option 5: Analyze existing snapshots
 
-Runs Python analysis script on exported snapshots:
+Runs `shell-scripts/analyze-snapshots.sh` on exported snapshots:
 
 - Displays statistics about recorded events
 - Shows event counts and types

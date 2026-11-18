@@ -120,7 +120,7 @@ jfr print --json apps/jfr-jdk-api-based-app/jfr-exports/jfr-export-*.jfr > event
 
 # Python tools
 ./shell-scripts/analyze-snapshots.sh apps/jfr-jdk-api-based-app/jfr-exports
-./shell-scripts/visualize-jfr.sh apps/jfr-jdk-api-based-app/jfr-exports/jfr-export-*.jfr
+./shell-scripts/visualize-jfr.sh apps/jfr-jdk-api-based-app/jfr-exports
 
 # GUI
 jmc -open apps/jfr-jdk-api-based-app/jfr-exports/jfr-export-*.jfr

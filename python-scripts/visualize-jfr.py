@@ -6,6 +6,7 @@ Interactive tool for exploring and visualizing JFR recording files.
 
 import subprocess
 import sys
+import html
 import json
 from pathlib import Path
 from collections import Counter
@@ -332,9 +333,11 @@ def action_html_report(jfr_dir):
         print(f"  Processing: {f.name}")
         size = f.stat().st_size / (1024 * 1024)
         summary = run_jfr(["summary", str(f)]) or "(summary unavailable)"
-        parts.append(f'<div class="file-section"><h2>{f.name}</h2>')
-        parts.append(f'<div class="section"><h3>File Information</h3><pre>File: {f.name}\nSize: {size:.2f} MB</pre></div>')
-        parts.append(f'<div class="section"><h3>Summary</h3><pre>{summary}</pre></div></div>')
+        safe_name = html.escape(f.name)
+        safe_summary = html.escape(summary)
+        parts.append(f'<div class="file-section"><h2>{safe_name}</h2>')
+        parts.append(f'<div class="section"><h3>File Information</h3><pre>File: {safe_name}\nSize: {size:.2f} MB</pre></div>')
+        parts.append(f'<div class="section"><h3>Summary</h3><pre>{safe_summary}</pre></div></div>')
 
     parts.append('</body></html>')
     output_path.write_text('\n'.join(parts))

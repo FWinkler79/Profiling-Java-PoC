@@ -161,7 +161,7 @@ There's a VS Code extension for viewing JFR files.
 
 ## Option 7: Custom Analysis with Scripts
 
-I'll create Python scripts for basic analysis below.
+Use `shell-scripts/analyze-snapshots.sh` for size and event count analysis, and `shell-scripts/visualize-jfr.sh` for the full interactive menu:
 
 ---
 
@@ -194,11 +194,11 @@ Download and install JMC for detailed visualization:
 
 ### 3. Automate Analysis with Scripts
 
-Use the Python scripts in `python-scripts/` for size and event analysis:
+Use the shell scripts for size analysis and interactive visualization:
 
 ```bash
 ./shell-scripts/analyze-snapshots.sh apps/jfr-profiler-based-app/jfr-exports
-./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
+./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports
 ```
 
 ---

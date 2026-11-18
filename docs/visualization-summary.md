@@ -9,29 +9,24 @@ QUICK START
 
 After collecting JFR snapshots, visualize them with:
 
-  ./shell-scripts/visualize-jfr.sh             ← Interactive menu (START HERE!)
+  ./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports
 
 
-4 WAYS TO VISUALIZE
+3 WAYS TO VISUALIZE
 ═══════════════════
 
 1. 🎯 Interactive Menu (No Install)
    ./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports
-   → Multiple options in one tool
-   → Great for beginners
+   → 10-option menu: ASCII stats, JMC, CLI summary, JSON, HTML, compare, and more
+   → Great for all skill levels
 
-2. 🎨 ASCII Charts (No Install)
-   ./shell-scripts/visualize-jfr.sh <file.jfr>
-   → Terminal-friendly visualization
-   → Shows methods, allocations, events
-
-3. 🔥 JDK Mission Control (Best - One-time Install)
+2. 🔥 JDK Mission Control (Best - One-time Install)
    brew install --cask jdk-mission-control
    jmc -open your-file.jfr
    → Professional flame graphs
    → Most powerful analysis
 
-4. ⚡ Command Line (No Install)
+3. ⚡ Command Line (No Install)
    jfr summary your-file.jfr
    → Fast, built-in
    → Good for quick checks
@@ -41,17 +36,14 @@ WHAT EACH TOOL SHOWS YOU
 ═════════════════════════
 
 visualize-jfr.sh:
-  ✓ File selection menu
-  ✓ All command line options
-  ✓ File comparison
+  ✓ Interactive 10-option menu
+  ✓ ASCII stats: event distribution, hot methods, allocation hotspots
+  ✓ CLI summary and detailed event print
   ✓ JSON export
-  ✓ Can launch JMC
-
-visualize-jfr.sh:
-  ✓ Top 15 event types (bar chart)
-  ✓ Hottest methods
-  ✓ Memory allocation hotspots
-  ✓ File size statistics
+  ✓ HTML report generation
+  ✓ File listing and comparison
+  ✓ Event type inspection
+  ✓ Can launch JMC directly
 
 JDK Mission Control:
   ✓ Flame graphs (BEST for finding bottlenecks!)
@@ -76,9 +68,10 @@ Step 1: Quick Check
   jfr summary apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
   → See if file has data
 
-Step 2: Visual Overview
-  ./shell-scripts/visualize-jfr.sh <file.jfr>
-  → Identify hot methods
+Step 2: Interactive Menu
+  ./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports
+  → Option 1 (ASCII stats) identifies hot methods
+  → Option 9 opens directly in JMC
 
 Step 3: Deep Analysis
   jmc -open apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
@@ -122,9 +115,8 @@ FILES IN THIS PROJECT
 ═════════════════════
 
 Visualization Tools:
-  visualize-jfr.sh              Interactive menu
-  visualize-jfr.sh        ASCII visualization
-  analyze-snapshots.sh    Size analysis
+  visualize-jfr.sh         Interactive menu (ASCII stats, JMC, compare, export, …)
+  analyze-snapshots.sh     Snapshot size and event count analysis
 
 Documentation:
   docs/visualization-guide.md           Complete guide
