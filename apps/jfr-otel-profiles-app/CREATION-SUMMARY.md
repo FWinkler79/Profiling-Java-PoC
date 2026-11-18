@@ -1,160 +1,175 @@
-# Summary: Third Application Created
+# Creation Summary: jfr-otel-profiles-app
 
 ## What Was Created
 
-A third Spring Boot application has been successfully created: **jfr-stream-based-otel-app**
+A Spring Boot application, **`jfr-otel-profiles-app`**, that reproduces the OpenTelemetry
+`opentelemetry-jfr-profiles-shim` approach: record `jdk.ExecutionSample` JFR events and export them as
+the **OTLP profiles signal** (pprof-style `ProfileData`, dictionary-encoded).
+
+This app is a sibling of `jfr-stream-based-otel-app` (which exports JFR data as OTLP *logs*).
 
 ### Location
-```
-apps/jfr-stream-based-otel-app/
+
+```text
+apps/jfr-otel-profiles-app/
 ```
 
-### Key Features
+### Key Design Decisions
 
-1. **Continuous JFR Recording** - Same approach as jfr-stream-app
-2. **No Local Files** - Unlike jfr-stream-app, exports directly to OTLP (no jfr-exports/ directory)
-3. **OpenTelemetry Integration** - Exports JFR events as OTLP structured logs via gRPC
-4. **Production Ready** - Uses stable OpenTelemetry SDK (1.33.0)
+1. **OTLP profiles signal** — uses the incubating `opentelemetry-sdk-profiles` + `opentelemetry-exporter-otlp-profiles`
+   at version `1.68.0-alpha`, plus the stable `opentelemetry-sdk` `1.68.0`.
+2. **`jdk.ExecutionSample` only** — unlike the logs-based app (~20 event types), this app records only CPU
+   method-profiling samples. The profiles signal is designed for stack-based data.
+3. **Streaming, not snapshotting** — a `RecordingStream` feeds samples to the converter live. A parallel
+   disk-backed `Recording` is dumped once per interval to embed raw JFR bytes in the `ProfileData`.
+4. **Atomic converter swap** — the concurrency boundary between the JFR callback thread and the Spring
+   scheduler is a single `AtomicReference.getAndSet(...)`. No lock guards `accept()`.
 
 ## Files Created
 
 ### Source Code
-- `src/main/java/com/example/jfrotel/JfrOtelApplication.java` - Main application class
-- `src/main/java/com/example/jfrotel/service/JfrOtelExportService.java` - Core export service
-- `src/main/java/com/example/jfrotel/controller/JfrOtelController.java` - REST API controller
+
+```text
+src/main/java/com/example/jfrotelprofiles/
+├── JfrProfilesApplication.java                   Main Spring Boot entry point
+├── controller/
+│   └── JfrProfilesController.java                REST API (/api/jfr/status, /api/jfr/health)
+├── jfr/
+│   ├── JfrExecutionSampleEventConverter.java      Accumulates pprof-style samples per interval
+│   ├── JfrLocationDataCompositor.java             Builds dictionary-encoded Location/Function data
+│   └── ProfileAssembler.java                     Assembles final ProfileData from converter snapshot
+└── service/
+    └── JfrProfilesExportService.java             Core service: stream, swap, export
+```
 
 ### Configuration
-- `src/main/resources/application.properties` - Application configuration
-- `pom.xml` - Maven dependencies
+
+```text
+src/main/resources/application.yaml              Server port, OTLP endpoint, JFR config
+pom.xml                                          Maven dependencies (OTel 1.68.0 / 1.68.0-alpha)
+```
+
+### Docker / Collector
+
+```text
+docker/
+├── docker-compose.yaml                          OTel Collector Contrib, profiles pipeline
+├── otel-collector-config.yaml                   profiles: [otlp] → [debug]
+├── start-collector.sh                           Convenience startup script
+└── README.md / DOCKER-SETUP-SUMMARY.md          Collector documentation
+```
 
 ### Documentation
-- `README.md` - Comprehensive user documentation
-- `QUICKSTART.md` - 5-minute quick start guide
-- `ARCHITECTURE.md` - Detailed architecture documentation
 
-### Scripts
-- `run.sh` - Build and run script (executable)
-- `.gitignore` - Git ignore rules
+```text
+README.md                                        Comprehensive user documentation
+QUICKSTART.md                                    5-minute quick start guide
+ARCHITECTURE.md                                  Detailed architecture documentation
+CREATION-SUMMARY.md                              This file
+run.sh                                           Build and run script
+```
 
 ## Implementation Details
 
-### Approach Taken
+### OTel Profiles Stack
 
-Instead of using the unreleased `opentelemetry-sdk-extension-jfr-profiles` (not available in Maven repositories), the implementation uses:
-
-1. **OpenTelemetry Logs API** - Stable and production-ready
-2. **Custom Event Conversion** - Converts JFR events to structured OTLP log records
-3. **Rich Attributes** - Each JFR event includes:
-   - Event type and duration
-   - Thread information
-   - Stack traces (when available)
-   - Event-specific metrics (CPU, GC, exceptions, etc.)
-
-### Key Dependencies
 ```xml
-- Spring Boot 3.2.0
-- OpenTelemetry SDK 1.33.0
-- OpenTelemetry OTLP Log Exporter
-- Google Protocol Buffers 3.25.1
+<!-- Stable OTel SDK -->
+<dependency>
+    <groupId>io.opentelemetry</groupId>
+    <artifactId>opentelemetry-sdk</artifactId>
+    <version>1.68.0</version>
+</dependency>
+
+<!-- Incubating profiles data model -->
+<dependency>
+    <groupId>io.opentelemetry</groupId>
+    <artifactId>opentelemetry-sdk-profiles</artifactId>
+    <version>1.68.0-alpha</version>
+</dependency>
+
+<!-- Incubating OTLP profiles exporter -->
+<dependency>
+    <groupId>io.opentelemetry</groupId>
+    <artifactId>opentelemetry-exporter-otlp-profiles</artifactId>
+    <version>1.68.0-alpha</version>
+</dependency>
 ```
 
-## Configuration
+### Export Flow
+
+```text
+RecordingStream → JfrExecutionSampleEventConverter (AtomicRef)
+                             │  every 15 s
+                     atomic swap (scheduler)
+                             │
+                   snapshotDrained() → samples + dictionary
+                             │
+                   rawRecording.dump(tempFile) → raw JFR bytes
+                             │
+                   ProfileAssembler.assemble() → ProfileData
+                             │
+                   OtlpGrpcProfileExporter.export(List.of(profile))
+```
+
+### Collector Configuration
+
+```yaml
+# otel-collector-config.yaml
+service:
+  pipelines:
+    profiles:
+      receivers: [otlp]
+      exporters: [debug]
+```
+
+```yaml
+# docker-compose.yaml
+command:
+  - "--config=/etc/otel-collector-config.yaml"
+  - "--feature-gates=+service.profilesSupport"
+```
+
+## App Configuration
 
 ### Port
-**8082** (different from the other two apps: 8080, 8081)
 
-### OTLP Endpoint
-Default: `http://localhost:4317` (configurable)
+**8082** (same as the sibling `jfr-stream-based-otel-app`)
 
-### Export Interval
-Every 15 seconds (same as jfr-stream-app)
+### Key Config Keys
 
-## How It Differs from jfr-stream-app
+| Key                                  | Default                  | Description                          |
+| ------------------------------------ | ------------------------ | ------------------------------------ |
+| `jfr.otlp.endpoint`                  | `http://localhost:4317`  | OTLP gRPC collector endpoint         |
+| `jfr.export.interval.seconds`        | `15`                     | Export interval                      |
+| `jfr.sample.period.millis`           | `10`                     | ExecutionSample period in ms         |
+| `jfr.instrumentation.scope.name`     | `jfr-otel-app`           | OTel instrumentation scope name      |
+| `jfr.instrumentation.scope.version`  | `1.0.0`                  | OTel instrumentation scope version   |
 
-| Aspect | jfr-stream-app | jfr-stream-based-otel-app |
-|--------|---------------|---------------------------|
-| **Storage** | Local files in `jfr-exports/` | None (streaming only) |
-| **Output Format** | JFR files | OTLP logs via gRPC |
-| **Analysis** | JMC, jfr tools | OTLP backend UI |
-| **Integration** | Manual file transfer | Direct backend integration |
-| **Network** | None | Requires OTLP backend |
+## Status Response
 
-## Testing
-
-### Build Verification
-```bash
-cd apps/jfr-stream-based-otel-app
-mvn clean package -DskipTests
-```
-✅ Build successful
-
-### To Run (Requires OTLP Backend)
-
-1. Start an OTLP backend (e.g., Elastic DevFiler):
-   ```bash
-   docker run -p 11000:11000 elastic/devfiler
-   ```
-
-2. Update `application.properties` if needed:
-   ```properties
-   jfr.otlp.endpoint=http://localhost:11000
-   ```
-
-3. Run the application:
-   ```bash
-   cd apps/jfr-stream-based-otel-app
-   ./run.sh
-   ```
-
-4. Check status:
-   ```bash
-   curl http://localhost:8082/api/jfr/status
-   ```
-
-## Documentation Updates
-
-The main `README.md` has been updated to include:
-- Third app in overview
-- Three-app comparison table
-- Updated project structure
-- Additional use cases
-- Updated API endpoints section
-- Three-app simultaneous run instructions
-
-## Architecture
-
-```
-JFR Recording → Temporary Snapshot → Event Conversion → gRPC Export → OTLP Backend
-                  (in-memory)         (OTLP Logs)       (port 4317)
+```json
+{
+  "recording_state": "RUNNING",
+  "otlp_endpoint": "http://localhost:4317",
+  "total_exports": 1,
+  "successful_exports": 1,
+  "failed_exports": 0,
+  "total_samples_exported": 1234
+}
 ```
 
-The application:
-1. Records JFR events continuously (15-second buffer)
-2. Every 15 seconds, creates a temporary snapshot
-3. Converts each JFR event to an OTLP log record with structured attributes
-4. Exports to the configured OTLP endpoint via gRPC
-5. Deletes the temporary file immediately
+## How It Differs from jfr-stream-based-otel-app
 
-## Future Enhancement Path
-
-When the OpenTelemetry Profile Signal extension becomes available in Maven Central, the implementation can be upgraded to use native profile export by:
-
-1. Adding the dependency:
-   ```xml
-   <dependency>
-       <groupId>io.opentelemetry</groupId>
-       <artifactId>opentelemetry-sdk-extension-jfr-profiles</artifactId>
-       <version>1.x.x</version>
-   </dependency>
-   ```
-
-2. Replacing the log-based export with profile-based export as shown in:
-   https://github.com/open-telemetry/opentelemetry-java/blob/main/opentelemetry-jfr-profiles-shim/src/main/java/io/opentelemetry/sdk/profiles/jfr/JfrExportExample.java
-
-The current implementation is production-ready and provides full functionality.
+| Aspect          | jfr-stream-based-otel-app          | jfr-otel-profiles-app                         |
+| --------------- | ---------------------------------- | --------------------------------------------- |
+| **Signal**      | OTLP Logs                          | OTLP Profiles                                 |
+| **Events**      | ~20 JFR event types                | `jdk.ExecutionSample` only                    |
+| **OTel SDK**    | 1.33.0 (stable)                    | 1.68.0 + 1.68.0-alpha                         |
+| **Exporter**    | `OtlpGrpcLogRecordExporter`        | `OtlpGrpcProfileExporter`                     |
+| **Data model**  | Structured log records             | pprof-style `ProfileData`                     |
+| **Collector**   | No feature gate needed             | `--feature-gates=+service.profilesSupport`    |
 
 ## Status
 
-✅ **Complete and Ready to Use**
-
-All files created, documented, and tested (build successful).
+All files created, documented, and build-verified (`mvn clean package -DskipTests`).

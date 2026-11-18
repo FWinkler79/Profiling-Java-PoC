@@ -2,35 +2,32 @@
 
 ## What This Provides
 
-A Docker Compose setup that runs an OpenTelemetry Collector. The collector receives JFR profiling logs from the
-application, prints them to the console for inspection, and forwards them to **SAP Cloud Logging** over an
-mTLS-secured OTLP connection.
+A Docker Compose setup that runs an OpenTelemetry Collector Contrib. The collector receives OTLP profiles
+from `jfr-otel-profiles-app` and prints them to the console via the `debug` exporter.
 
 ### Files
 
 ```text
 docker/
-├── .gitignore                      # Ignores logs, overrides, certs/, etc.
+├── .gitignore                      # Ignores logs, local overrides, etc.
 ├── docker-compose.yaml             # Docker Compose configuration
-├── otel-collector-config.yaml      # Collector pipeline configuration
-├── certs/                          # mTLS client cert + key (gitignored, not committed)
-│   ├── ingest-client.crt
-│   └── ingest-client.key
+├── otel-collector-config.yaml      # Collector profiles-pipeline configuration
 ├── start-collector.sh              # Convenience startup script
 ├── README.md                       # Comprehensive documentation
-└── DOCKER-SETUP-SUMMARY.md         # This summary
+└── DOCKER-SETUP-SUMMARY.md         # This file
 ```
 
 ## Configuration Details
 
 ### Docker Compose Setup
 
-**Service:** `jfr-otel-collector`
+**Service key:** `otel-collector`
+**Container name:** `jfr-otel-profiles-collector`
 
-- Image: `otel/opentelemetry-collector-contrib:0.165.0` (the `contrib` distribution is required)
-- Container name: `jfr-otel-collector`
+- Image: `otel/opentelemetry-collector-contrib:0.165.0`
 - Network: `jfr-otel-network` (bridge)
-- Volumes: collector config, plus `./certs` mounted read-only at `/etc/otel/certs`
+- Command flags: `--config=... --feature-gates=+service.profilesSupport`
+- Volume: `./otel-collector-config.yaml` mounted at `/etc/otel-collector-config.yaml`
 
 **Exposed Ports:**
 
@@ -43,41 +40,17 @@ docker/
 
 **Receivers:**
 
-- `otlp` — receives OTLP logs via gRPC and HTTP
-
-**Processors:**
-
-- `resource` — adds the `service.namespace: jfr-profiling` attribute
-
-(A `batch` processor is defined in the config but not currently wired into the logs pipeline.)
+- `otlp` — receives OTLP profiles via gRPC and HTTP
 
 **Exporters:**
 
 - `debug` — detailed console output
-- `otlp/sap-cloud-logging` — forwards logs to SAP Cloud Logging over mTLS (client-certificate auth)
 
-**Pipeline:**
+**Pipeline type:** `profiles` (not `logs`)
 
 ```text
-otlp receiver → resource → [debug, otlp/sap-cloud-logging] exporters
+otlp receiver → [debug] exporter
 ```
-
-### SAP Cloud Logging Export (mTLS)
-
-The OTLP exporter presents a client certificate instead of a username/password. The certificate and key live in
-`./certs` (gitignored) and are mounted into the container:
-
-```yaml
-exporters:
-  otlp/sap-cloud-logging:
-    endpoint: <your-instance>.ingest-otlp.cls-NN.cloud.logs.services.sap.hana.ondemand.com:443
-    tls:
-      insecure: false
-      cert_file: /etc/otel/certs/ingest-client.crt
-      key_file: /etc/otel/certs/ingest-client.key
-```
-
-See `README.md` for how to provide the certificate files.
 
 ## Application Configuration
 
@@ -96,58 +69,57 @@ jfr:
 ```bash
 # 1. Start the collector
 cd docker
-./start-collector.sh
+docker compose up -d
 
 # 2. Start the app (in another terminal)
 cd ..
 ./run.sh
 
-# 3. View logs
+# 3. View profiles in the collector output
 cd docker
-docker compose logs -f
+docker compose logs -f otel-collector
 ```
 
 ### What You Will See
 
-The collector outputs JFR events as structured logs (and forwards them to SAP Cloud Logging):
+The collector outputs received profiles via the `debug` exporter:
 
 ```text
-ResourceLog #0
+ResourceProfiles #0
 Resource attributes:
      -> service.name: Str(jfr-otel-app)
-     -> service.namespace: Str(jfr-profiling)
-ScopeLogs #0
+     -> service.version: Str(1.0.0)
+ScopeProfiles #0
 InstrumentationScope jfr-otel-app 1.0.0
-LogRecord #0
-Body: Str(jdk.ExecutionSample)
-Attributes:
-     -> jfr.event.type: Str(jdk.ExecutionSample)
-     -> thread.name: Str(main)
-     -> code.function: Str(handleRequest)
-     -> stack.depth: Int(15)
+Profile #0
+  DurationNanos: 15000000000
+  Samples: 1234  (jdk.ExecutionSample @ 10 ms)
 ```
 
 ### Management Commands
 
 ```bash
-# Start the collector
-cd docker && ./start-collector.sh
+# Start the collector (detached)
+docker compose up -d
+
+# Start and watch logs immediately
+docker compose up
 
 # View logs in real time
-docker compose logs -f
-
-# View logs with timestamps
-docker compose logs -f --timestamps
+docker compose logs -f otel-collector
 
 # Stop the collector
 docker compose down
 
-# Restart the collector (after config changes)
-docker compose restart
+# Restart after config changes
+docker compose restart otel-collector
 
 # Check collector health
 curl http://localhost:13133
 ```
+
+> **Tip:** `docker compose logs` uses the *service* key (`otel-collector`).
+> `docker logs` uses the *container* name (`jfr-otel-profiles-collector`).
 
 ## Architecture
 
@@ -155,40 +127,42 @@ curl http://localhost:13133
 ┌────────────────────────┐
 │  Spring Boot App       │
 │  (port 8082)           │
-│  - JFR Recording       │
-│  - OTLP Log Export     │
+│  - RecordingStream     │
+│    jdk.ExecutionSample │
+│  - ProfileData export  │
 └──────────┬─────────────┘
            │
-           │ OTLP/gRPC
+           │ OTLP profiles / gRPC
            │ localhost:4317
-           ↓
+           ▼
 ┌────────────────────────┐
 │  Docker Container      │
-│  jfr-otel-collector    │
+│  jfr-otel-profiles-    │
+│  collector             │
+│                        │
+│  --feature-gates=      │
+│  +service.             │
+│  profilesSupport       │
 │                        │
 │  ┌──────────────────┐  │
 │  │ OTLP Receiver    │  │
-│  │ :4317 :4318      │  │
-│  └────────┬─────────┘  │
-│           │            │
-│  ┌────────▼─────────┐  │
-│  │ Resource Attrs   │  │
+│  │ :4317  :4318     │  │
 │  └────────┬─────────┘  │
 │           │            │
 │  ┌────────▼─────────┐  │
 │  │ Debug Exporter   │  │
-│  │ OTLP Exporter    │  │
-│  └───┬───────────┬──┘  │
-└──────┼───────────┼─────┘
-       │           │
-       ↓           ↓
-  Docker Logs   SAP Cloud Logging
-  (console)     (ingest-otlp, mTLS)
+│  └────────┬─────────┘  │
+└───────────┼────────────┘
+            │
+            ▼
+       Docker logs
+       (console)
 ```
 
-## Benefits
+## Key Facts
 
-1. **Immediate feedback** — see profiling data in the console via the debug exporter.
-2. **Real backend** — logs are shipped to SAP Cloud Logging over a secure mTLS connection.
-3. **Secrets stay out of git** — the client certificate and key live in a gitignored `certs/` directory.
-4. **Pinned, reproducible image** — the collector version is pinned rather than tracking `latest`.
+- The collector feature gate `+service.profilesSupport` is **required**. Without it the profiles pipeline
+  is not enabled and the collector will reject incoming profiles data.
+- No SAP Cloud Logging, no mTLS, no client certificates — this is a local development setup only.
+- The `debug` exporter is the primary way to verify profiles are flowing. For a richer UI, use
+  [devfiler](https://github.com/elastic/devfiler/) or [Grafana Pyroscope](https://grafana.com/oss/pyroscope/).

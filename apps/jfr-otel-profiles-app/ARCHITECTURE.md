@@ -1,191 +1,158 @@
-# Architecture: JFR Stream-Based OTLP Application
+# Architecture: JFR OpenTelemetry Profiles Application
 
 ## Overview
 
-This document describes the architecture of the JFR Stream-Based OTLP application, which continuously records Java Flight Recorder (JFR) events and exports them to OpenTelemetry Protocol (OTLP) backends.
+This document describes the architecture of `jfr-otel-profiles-app`, a Spring Boot application that
+reproduces the OpenTelemetry `opentelemetry-jfr-profiles-shim` approach. It continuously records
+`jdk.ExecutionSample` JFR events via a `RecordingStream` and exports them as the **OTLP profiles signal**
+(pprof-style `ProfileData`, dictionary-encoded).
 
 ## System Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Spring Boot Application                       │
 │                                                                   │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │              JFR Recording (Continuous)                   │  │
-│  │  - ExecutionSample (10ms)                                 │  │
-│  │  - CPULoad, ThreadStats                                   │  │
-│  │  - GC Events                                              │  │
-│  │  - Memory Allocation                                      │  │
-│  │  - I/O Events, Exceptions                                 │  │
-│  │  - 15-second rolling buffer                               │  │
+│  │           RecordingStream (JFR live stream)               │  │
+│  │  - Event: jdk.ExecutionSample (10 ms period)              │  │
+│  │  - onEvent callback → converterRef.get().accept(e)        │  │
 │  └────────────────┬─────────────────────────────────────────┘  │
 │                   │                                              │
-│                   │ Every 15 seconds                             │
-│                   ↓                                              │
+│                   │ each ExecutionSample                         │
+│                   ▼                                              │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │          JfrOtelExportService (Scheduled)                 │  │
+│  │      JfrExecutionSampleEventConverter (AtomicRef)         │  │
 │  │                                                            │  │
-│  │  1. recording.dump(tempFile)  → Snapshot to temp         │  │
-│  │  2. RecordingFile.read()      → Parse JFR events         │  │
-│  │  3. Convert to OTLP Logs      → Structured attributes    │  │
-│  │  4. loggerProvider.emit()     → Send to exporter         │  │
-│  │  5. Delete temp file          → Clean up                 │  │
+│  │  Accumulates dictionary-encoded stacks per interval:      │  │
+│  │    - Strings dictionary (function/class names)            │  │
+│  │    - Functions list                                        │  │
+│  │    - Locations list                                        │  │
+│  │    - SampleData list (location refs + value counts)       │  │
 │  └────────────────┬─────────────────────────────────────────┘  │
 │                   │                                              │
-│                   ↓                                              │
+│                   │ atomic swap every 15 s (scheduler thread)   │
+│                   ▼                                              │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │         OpenTelemetry SDK Components                      │  │
+│  │        JfrProfilesExportService (@Scheduled)              │  │
 │  │                                                            │  │
-│  │  ┌────────────────────────────────────┐                  │  │
-│  │  │    SdkLoggerProvider                │                  │  │
-│  │  │  - Resource attributes              │                  │  │
-│  │  │  - Instrumentation scope            │                  │  │
-│  │  └──────────────┬─────────────────────┘                  │  │
-│  │                 │                                          │  │
-│  │                 ↓                                          │  │
-│  │  ┌────────────────────────────────────┐                  │  │
-│  │  │  BatchLogRecordProcessor            │                  │  │
-│  │  │  - Batches events for efficiency    │                  │  │
-│  │  │  - 5-second schedule delay          │                  │  │
-│  │  └──────────────┬─────────────────────┘                  │  │
-│  │                 │                                          │  │
-│  │                 ↓                                          │  │
-│  │  ┌────────────────────────────────────┐                  │  │
-│  │  │  OtlpGrpcLogRecordExporter          │                  │  │
-│  │  │  - gRPC protocol                    │                  │  │
-│  │  │  - 30-second timeout                │                  │  │
-│  │  │  - Configurable endpoint            │                  │  │
-│  │  └──────────────┬─────────────────────┘                  │  │
-│  └─────────────────┼─────────────────────────────────────────┘  │
+│  │  1. swapConverter()   → atomically take drained converter │  │
+│  │  2. settleAfterSwap() → 50 ms drain-race guard            │  │
+│  │  3. snapshotDrained() → materialise samples + dictionary  │  │
+│  │  4. rawRecording.dump(tempFile) → embed raw JFR bytes     │  │
+│  │  5. ProfileAssembler.assemble() → build ProfileData       │  │
+│  │  6. exporter.export(List.of(profile))                     │  │
+│  │  7. delete temp file                                       │  │
+│  └────────────────┬─────────────────────────────────────────┘  │
+│                   │                                              │
+│                   ▼                                              │
+│  ┌──────────────────────────────────────────────────────────┐  │
+│  │           OtlpGrpcProfileExporter                         │  │
+│  │  - Protocol: gRPC (OTLP profiles)                        │  │
+│  │  - Endpoint: configurable (default http://localhost:4317) │  │
+│  │  - Timeout: 30 seconds per export                        │  │
+│  └────────────────┬─────────────────────────────────────────┘  │
 └────────────────────┼────────────────────────────────────────────┘
                      │
-                     │ gRPC (OTLP)
+                     │ gRPC / OTLP profiles
                      │ Port 4317
-                     ↓
-       ┌──────────────────────────────┐
-       │    OTLP Backend               │
-       │  - OpenTelemetry Collector    │
-       │  - Elastic DevFiler           │
-       │  - Jaeger                     │
-       │  - Grafana Tempo              │
-       │  - Custom OTLP receiver       │
-       └──────────────────────────────┘
+                     ▼
+       ┌──────────────────────────────────────┐
+       │    OTLP Backend                       │
+       │  - OTel Collector Contrib             │
+       │    (--feature-gates=+service.         │
+       │     profilesSupport)                  │
+       │  - Elastic devfiler (:11000)          │
+       │  - Grafana Pyroscope                  │
+       └──────────────────────────────────────┘
 ```
 
 ## Component Details
 
 ### 1. JFR Recording Layer
 
-**Purpose:** Continuously capture JVM runtime events with minimal overhead.
+Two JFR facilities run in parallel inside `JfrProfilesExportService.startStreaming()`:
 
-**Configuration:**
-- `maxAge`: 15 seconds - only keeps recent events
-- `toDisk`: true - buffers to disk for reliability
-- Event types: Aligned with `jfr-config.jfc` at project root
+#### RecordingStream (live feed)
 
-**Key Events Monitored:**
-```java
-jdk.ExecutionSample        // Method profiling (10ms sampling)
-jdk.CPULoad                // CPU usage (1s period)
-jdk.JavaThreadStatistics   // Thread metrics (1s period)
-jdk.GarbageCollection      // All GC events
-jdk.ObjectAllocation*      // Memory allocations
-jdk.JavaExceptionThrow     // Exception tracking
-jdk.FileRead/Write         // I/O operations
-jdk.SocketRead/Write       // Network I/O
-jdk.ClassLoad              // Class loading
-jdk.Compilation            // JIT compilation
-jdk.JavaMonitorEnter       // Lock contention
-jdk.ThreadPark             // Thread parking
-```
+- `RecordingStream.enable("jdk.ExecutionSample").withStackTrace().withPeriod(10 ms)`
+- `onEvent` callback: `converterRef.get().accept(e)` — feeds each sample to the *current* converter
+- `startAsync()` — runs on JFR's internal thread pool
 
-### 2. Export Service Layer
+#### Raw Recording (disk-backed)
 
-**Class:** `JfrOtelExportService`
+- `Recording.enable("jdk.ExecutionSample").withStackTrace().withPeriod(10 ms)`
+- `setToDisk(true)` — buffers the raw JFR stream to disk
+- Dumped once per interval via `rawRecording.dump(tempFile)` so the raw bytes can be embedded in
+  the exported `ProfileData`
 
-**Scheduling:**
-- Initial delay: 30 seconds (let JFR warm up)
-- Fixed delay: 15 seconds between exports
-- Spring `@Scheduled` annotation
+**Only `jdk.ExecutionSample` is recorded.** This is intentional: the profiles signal is designed for
+stack-based profiling data, not general JVM telemetry.
 
-**Export Process:**
+### 2. Converter and Assembler Layer
 
-```java
-1. Create temporary file
-2. recording.dump(tempFile)         // Non-blocking snapshot
-3. Parse with RecordingFile
-4. For each JFR event:
-   a. Extract event type and metadata
-   b. Build OTLP log attributes
-   c. Add thread information
-   d. Add stack trace (if present)
-   e. Extract type-specific fields
-   f. Emit as log record
-5. Force flush to ensure delivery
-6. Delete temporary file
-```
+#### JfrExecutionSampleEventConverter
 
-**Event to OTLP Mapping:**
+Converts each `RecordedEvent` to the pprof dictionary structure:
 
-| JFR Field | OTLP Attribute | Type |
-|-----------|---------------|------|
-| Event type | `jfr.event.type` | String |
-| Duration | `jfr.event.duration` | Long (nanos) |
-| Thread name | `thread.name` | String |
-| Thread ID | `thread.id` | Long |
-| Top frame method | `code.function` | String |
-| Top frame class | `code.namespace` | String |
-| Stack depth | `stack.depth` | Integer |
-| CPU metrics | `cpu.jvm.user`, `cpu.jvm.system` | Float |
-| GC name | `gc.name` | String |
-| Exception type | `exception.type` | String |
-| Exception message | `exception.message` | String |
+| pprof concept  | OTel type                        | Description                              |
+| -------------- | -------------------------------- | ---------------------------------------- |
+| Strings dict   | `ProfilesDictionaryCompositor`   | Intern strings (function/class names)    |
+| Function       | `FunctionData`                   | Method name + class name                 |
+| Location       | `LocationData`                   | Stack frame (function + line)            |
+| Sample         | `SampleData`                     | Location indices + sample count          |
 
-### 3. OpenTelemetry Layer
+#### ProfileAssembler
+
+Consumes the materialized `DrainedSnapshot` (samples, dictionary, value type) and the raw JFR bytes,
+and returns a single `ProfileData` with:
+
+- `startEpochNanos` / `durationNanos` — interval window
+- `periodNanos` — sample period (10 ms)
+- `resource` + `scope` — OTel resource and instrumentation scope
+- `rawProfile` — raw JFR bytes embedded as the profile payload
+
+### 3. Concurrency Model
+
+The JFR stream callback thread and the Spring scheduler thread share the
+`AtomicReference<JfrExecutionSampleEventConverter> converterRef`. The hand-off protocol is:
+
+1. **Scheduler** calls `converterRef.getAndSet(new converter)` — atomically installs a fresh converter
+   and takes the drained one.
+2. **Sleep 50 ms** — lets any JFR callback that read the old reference before the swap finish calling
+   `drained.accept(e)` (the converter's maps are not thread-safe).
+3. **snapshotDrained()** — reads the drained converter exactly once, with one CME retry. Returns `null`
+   on persistent failure so the interval is skipped cleanly.
+
+### 4. OpenTelemetry Layer
+
+**Dependencies:**
+
+- `opentelemetry-sdk` `1.68.0` — stable SDK
+- `opentelemetry-sdk-profiles` `1.68.0-alpha` — incubating profiles data model
+- `opentelemetry-exporter-otlp-profiles` `1.68.0-alpha` — `OtlpGrpcProfileExporter`
 
 **Resource Attributes:**
+
 ```java
-service.name              = jfr-otel-app (configurable)
-service.version           = 1.0.0 (configurable)
-telemetry.sdk.name        = jfr-otel-exporter
-telemetry.sdk.language    = java
+service.name     = jfr-otel-app   (configurable via jfr.instrumentation.scope.name)
+service.version  = 1.0.0          (configurable via jfr.instrumentation.scope.version)
 ```
 
-**Batching Strategy:**
-- `BatchLogRecordProcessor` batches log records
-- 5-second schedule delay
-- Reduces network overhead
-- Improves throughput
+### 5. REST API Layer
 
-**Export Configuration:**
-- Protocol: gRPC
-- Endpoint: Configurable via `jfr.otlp.endpoint`
-- Timeout: 30 seconds per export attempt
-- Retry: Handled by OpenTelemetry SDK
+**Controller:** `JfrProfilesController` — `GET /api/jfr/status`, `GET /api/jfr/health`
 
-### 4. REST API Layer
+**Status response fields:**
 
-**Controller:** `JfrOtelController`
-
-**Endpoints:**
-
-```
-GET /api/jfr/status
-{
-  "recording_state": "RUNNING",
-  "otlp_endpoint": "http://localhost:4317",
-  "total_exports": 42,
-  "successful_exports": 40,
-  "failed_exports": 2,
-  "total_events_exported": 123456
-}
-
-GET /api/jfr/health
-{
-  "status": "UP",
-  "service": "JFR OTLP Export Service"
-}
-```
+| Field                     | Description                                                          |
+| ------------------------- | -------------------------------------------------------------------- |
+| `recording_state`         | State of the disk-backed `Recording` (proxy for stream health)       |
+| `otlp_endpoint`           | Configured OTLP gRPC endpoint                                        |
+| `total_exports`           | Total export attempts (including skipped-empty intervals)            |
+| `successful_exports`      | Exports where `exporter.export(...)` returned success                |
+| `failed_exports`          | Exports that failed or were skipped due to drain errors              |
+| `total_samples_exported`  | Cumulative `jdk.ExecutionSample` count across all successful exports |
 
 ## Configuration
 
@@ -201,9 +168,9 @@ jfr:
   export:
     interval:
       seconds: 15
-  recording:
-    max-age:
-      seconds: 15
+  sample:
+    period:
+      millis: 10
   instrumentation:
     scope:
       name: jfr-otel-app
@@ -212,229 +179,91 @@ jfr:
 
 ## Data Flow Sequence
 
-```
-Time: T
-  ↓
-[JFR Recording Active - Buffering last 15 seconds]
-  ↓
-Time: T+30 (first export)
-  ↓
-[Create /tmp/jfr-snapshot-xxx.jfr]
-  ↓
-[Dump current buffer to file]
-  ↓
-[Parse JFR events]
-  ↓
-[Convert to OTLP logs with attributes]
-  ↓
-[Batch processor queues records]
-  ↓
-Time: T+35 (batch delay)
-  ↓
-[gRPC export to OTLP backend]
-  ↓
-[Delete temp file]
-  ↓
-Time: T+45 (next export cycle)
-  ↓
-[Repeat...]
+```text
+T=0:  RecordingStream started + rawRecording started
+         │
+         │   jdk.ExecutionSample events at 10 ms → converterRef.get().accept(e)
+         │
+T=30: First export interval fires (30 s initial delay)
+         │
+         ├─ swapConverter() → drained = old converter, fresh converter installed
+         ├─ sleep 50 ms (drain-race guard)
+         ├─ snapshotDrained() → materialise samples + dictionary
+         ├─ rawRecording.dump(tempFile) → write raw JFR bytes
+         ├─ ProfileAssembler.assemble(...) → ProfileData
+         ├─ OtlpGrpcProfileExporter.export(List.of(profile))
+         └─ delete tempFile
+         │
+T=45: Next export interval fires (15 s fixed delay)
+         │
+         └─ [repeat swap → assemble → export]
 ```
 
 ## Performance Characteristics
 
 ### Overhead
 
-**JFR Recording:**
-- CPU: <2% (JFR is production-grade)
-- Memory: ~15 seconds of buffered events
-- Disk: Temporary buffer files
-
-**Export Process:**
-- Duration: 200-500ms per export
-- Network: 100KB-1MB per export (varies by activity)
-- I/O: Temporary file creation/deletion
-
-**Overall Impact:**
-- Export occurs every 15 seconds
-- Non-blocking: JFR continues recording during export
-- Batched network I/O reduces overhead
-
-### Scalability
-
-**Event Volume:**
-- Typical: 1,000-10,000 events per export
-- High load: 50,000+ events per export
-- Parser can handle 100K+ events/second
-
-**Network:**
-- gRPC with compression
-- Batch processing reduces request count
-- Configurable timeout handles slow backends
-
-## Error Handling
-
-### Export Failures
-
-```java
-try {
-    // Export process
-    successfulExports.increment();
-} catch (Exception e) {
-    failedExports.increment();
-    logger.error("Export failed", e);
-    // Continue recording - don't stop JFR
-}
-```
-
-**Recovery:**
-- Failed exports don't stop JFR recording
-- Next export attempt continues from current buffer
-- Lost events are not retried (real-time streaming model)
-
-### Shutdown
-
-```java
-@PreDestroy
-1. Stop JFR recording if running
-2. Close recording resources
-3. Flush pending OTLP batches
-4. Shutdown logger provider
-5. Close exporter
-```
-
-## Comparison with Alternatives
-
-### vs. JFR File-Based Export
-
-| Aspect | This App (OTLP) | File-Based |
-|--------|----------------|------------|
-| Storage | None (streaming) | Local files |
-| Analysis | Real-time backend | Post-processing |
-| Integration | Direct OTLP | Manual transfer |
-| Overhead | Network + export | Disk I/O only |
-
-### vs. Native Profile Signal (Future)
-
-Current implementation uses **Logs API** because the Profile Signal extension
-is not yet released to Maven Central.
-
-**When Profile Signal is available:**
-- Replace `OtlpGrpcLogRecordExporter` with `OtlpGrpcProfileExporter`
-- Use `JfrExecutionSampleEventConverter` directly
-- Export as `ProfileData` instead of `LogRecordData`
-- Same network protocol (gRPC), better semantic fit
-
-## Deployment Considerations
-
-### Backend Requirements
-
-**OTLP Receiver must support:**
-- gRPC protocol
-- OTLP logs format
-- Port 4317 (default) or custom port
-
-**Backend Options:**
-- OpenTelemetry Collector (with OTLP receiver)
-- Elastic DevFiler (standalone profile receiver)
-- Jaeger with OTLP support
-- Grafana Tempo
-- Any OTLP-compatible APM
+| Component                                    | Overhead                                    |
+| -------------------------------------------- | ------------------------------------------- |
+| `RecordingStream` + `jdk.ExecutionSample`    | <2% CPU (JFR is production-grade)           |
+| Converter accumulation                       | Negligible — one map insertion per sample   |
+| Export per interval                          | 200–500 ms (network + serialisation)        |
+| Raw JFR dump                                 | Proportional to recording size (~KB range)  |
 
 ### Network
 
-**Firewall Rules:**
-- Outbound gRPC to OTLP endpoint
-- Port 4317 (or configured port)
+- Approximately 1 `ProfileData` message per 15-second interval
+- Size depends on stack depth and unique function count (typically tens of KB)
 
-**Bandwidth:**
-- ~100KB-1MB per 15 seconds
-- ~4-16KB/second average
-- Spikes during high activity
+## Error Handling
+
+### Export failures
+
+- Failed exports increment `failedExports` and log at WARN/ERROR
+- JFR recording continues — the next interval starts a fresh converter
+- Lost samples from the failed interval are not retried
+
+### Drain race (ConcurrentModificationException)
+
+- If the post-swap settle sleep is not enough, `snapshotDrained()` retries once
+- On persistent failure the interval is skipped (`failedExports` incremented, no partial export)
+
+### Shutdown (`@PreDestroy`)
+
+1. `RecordingStream.close()` — stops the JFR stream
+2. `exportInterval()` — final export of accumulated samples
+3. `rawRecording.stop()` + `rawRecording.close()`
+4. `exporter.shutdown()` — flushes and closes the gRPC channel
+
+## Deployment Considerations
+
+### Collector Requirements
+
+The OpenTelemetry Collector must:
+
+- Be the **Contrib** distribution (`otel/opentelemetry-collector-contrib`)
+- Be started with `--feature-gates=+service.profilesSupport`
+- Have a `profiles` pipeline configured (receiver `otlp` → exporter `debug` or other)
+
+The `docker/` directory in this app provides a ready-to-use `docker-compose.yaml` and
+`otel-collector-config.yaml` that satisfy all these requirements.
+
+### Network Bandwidth
+
+- Outbound gRPC to the OTLP endpoint (default port 4317)
+- Approximately a few KB per export; 15-second intervals
 
 ### Monitoring
 
-**Metrics to Track:**
-- `successful_exports` / `failed_exports` ratio
-- `total_events_exported` growth rate
-- Export duration (logged)
-- Backend ingestion lag
+Key metrics to track:
 
-## Security
-
-### Data Sensitivity
-
-JFR events may contain:
-- Stack traces (method and class names)
-- Thread names
-- File paths
-- Exception messages
-
-**Considerations:**
-- Review data before routing to external backends
-- Consider filtering sensitive events
-- Use secure transport (TLS) for OTLP
-
-### Network Security
-
-**Recommended:**
-- mTLS for gRPC connection
-- Backend authentication
-- Network isolation
-
-**Configuration:**
-```java
-// Add to OtlpGrpcLogRecordExporter.builder()
-.setTrustedCertificates(cert)
-.addHeader("Authorization", "Bearer " + token)
-```
-
-## Troubleshooting
-
-### No Events Exported
-
-1. Check recording state: `/api/jfr/status`
-2. Verify OTLP endpoint connectivity
-3. Review application logs for errors
-4. Ensure 30-second initial delay has passed
-
-### High Failed Exports
-
-1. Check backend availability
-2. Verify endpoint URL format
-3. Review network connectivity
-4. Check backend resource limits
-
-### High Event Volume
-
-1. Reduce `maxAge` to < 15 seconds
-2. Disable non-critical event types
-3. Increase export interval
-4. Scale backend resources
-
-## Future Enhancements
-
-1. **Profile Signal Support**
-   - Use native Profile API when available
-   - Better semantic fit for profiling data
-
-2. **Event Filtering**
-   - Configuration to exclude event types
-   - Sampling strategies for high-volume events
-
-3. **Metrics Export**
-   - Add OpenTelemetry metrics for export statistics
-   - Histogram of event counts by type
-
-4. **Health Checks**
-   - Ping OTLP endpoint on startup
-   - Report backend connectivity in health endpoint
-
-5. **Adaptive Intervals**
-   - Adjust export frequency based on activity
-   - Faster exports during high load
+- `successful_exports` / `failed_exports` ratio via `GET /api/jfr/status`
+- `total_samples_exported` growth rate (should increase every interval)
 
 ## References
 
-- [OpenTelemetry Specification](https://opentelemetry.io/docs/specs/otel/)
+- [OpenTelemetry Profiles Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/profiles/profiles.md)
+- [opentelemetry-jfr-profiles-shim](https://github.com/open-telemetry/opentelemetry-java/tree/main/opentelemetry-jfr-profiles-shim)
 - [JFR Documentation](https://docs.oracle.com/en/java/javase/17/jfapi/)
 - [OTLP Specification](https://github.com/open-telemetry/opentelemetry-proto)
+- [OTel Collector Contrib](https://github.com/open-telemetry/opentelemetry-collector-contrib)
