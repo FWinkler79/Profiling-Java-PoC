@@ -77,8 +77,8 @@ cleanup() {
         echo "Collected $COUNT snapshots (total size: $TOTAL_SIZE)"
         echo ""
         echo "To analyze:"
-        echo "  python3 ../../analyze-snapshots.py $JFR_SNAPSHOT_DIR"
-        echo "  python3 ../../visualize-jfr.py $JFR_SNAPSHOT_DIR/snapshot-*.jfr"
+        echo "  python3 ../../python-scripts/analyze-snapshots.py $JFR_SNAPSHOT_DIR"
+        echo "  python3 ../../python-scripts/visualize-jfr.py $JFR_SNAPSHOT_DIR/snapshot-*.jfr"
         echo "  jmc -open $JFR_SNAPSHOT_DIR/snapshot-001-*.jfr"
     fi
 

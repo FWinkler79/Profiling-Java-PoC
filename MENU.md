@@ -279,7 +279,7 @@ The menu calls these scripts:
 - `./apps/jfr-profiler-based-app/start-continuous-profiling.sh` - Option 2
 - `./apps/jfr-profiler-based-app/load-generator.sh` - Options 3, 9
 - `./merge-jfr-files.sh` - Options 4, 11
-- `./analyze-snapshots.py` - Option 5
+- `./python-scripts/analyze-snapshots.py` - Option 5
 - `./view-jfr.sh` - Option 18
 - `./apps/jfr-jdk-api-based-app/run.sh` - Option 8
 - `./apps/jfr-jdk-api-based-app/generate-load.sh` - Option 9

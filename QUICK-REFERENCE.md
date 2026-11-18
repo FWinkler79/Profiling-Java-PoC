@@ -137,7 +137,7 @@ Change `maxage=15s` to `maxage=10s` or `maxage=5s`
 
 4. **Analyze results**:
    ```bash
-   python3 analyze-snapshots.py
+   python3 python-scripts/analyze-snapshots.py
    ```
 
 5. **Modify `jfr-config.jfc`** with one change
@@ -228,7 +228,7 @@ mvn clean package
 python3 jfr-snapshot-manager.py
 
 # Analyze
-python3 analyze-snapshots.py
+python3 python-scripts/analyze-snapshots.py
 
 # View a snapshot
 jfr print jfr-snapshots/snapshot-001-*.jfr | less

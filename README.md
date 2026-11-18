@@ -64,8 +64,9 @@ JFR-Test/
 │
 ├── merge-jfr-files.sh           # Merge JFR exports (general purpose)
 ├── view-jfr.sh                  # Interactive JFR viewer (general purpose)
-├── analyze-snapshots.py         # Snapshot analyzer (general purpose)
-├── visualize-jfr.py             # JFR visualizer (general purpose)
+├── python-scripts/
+│   ├── analyze-snapshots.py         # Snapshot analyzer (general purpose)
+│   └── visualize-jfr.py             # JFR visualizer (general purpose)
 ├── PROJECT-OVERVIEW.md          # Detailed comparison
 └── README.md                    # This file
 ```

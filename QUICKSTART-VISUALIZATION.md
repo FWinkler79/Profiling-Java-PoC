@@ -10,7 +10,7 @@ This launches an interactive menu with all visualization options.
 
 ### Method 2: Python Visualizer (No Install Required)
 ```bash
-python3 visualize-jfr.py
+python3 python-scripts/visualize-jfr.py
 ```
 Creates ASCII charts showing:
 - Event distribution
@@ -97,7 +97,7 @@ jfr print --events jdk.ExecutionSample jfr-snapshots/snapshot-001-*.jfr | \
 
 **Python Script:**
 ```bash
-python3 visualize-jfr.py
+python3 python-scripts/visualize-jfr.py
 # Shows top methods automatically
 ```
 
@@ -160,10 +160,10 @@ Let it run for ~5 snapshots (75 seconds), then stop.
 ### 2. Quick Analysis
 ```bash
 # Check sizes first
-python3 analyze-snapshots.py
+python3 python-scripts/analyze-snapshots.py
 
 # Visualize the latest
-python3 visualize-jfr.py
+python3 python-scripts/visualize-jfr.py
 ```
 
 ### 3. Deep Dive in JMC
@@ -282,7 +282,7 @@ brew install --cask jdk-mission-control  # macOS
 | Task | Command |
 |------|---------|
 | Interactive menu | `./view-jfr.sh` |
-| ASCII visualization | `python3 visualize-jfr.py` |
+| ASCII visualization | `python3 python-scripts/visualize-jfr.py` |
 | Quick summary | `jfr summary file.jfr` |
 | Open in JMC | `jmc -open file.jfr` |
 | Export to JSON | `jfr print --json file.jfr > output.json` |
