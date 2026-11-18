@@ -52,7 +52,25 @@ JFR-Test/
 
 ## Quick Start
 
-### Option 1: Traditional JFR (jfr-file-based-app)
+### Using the Interactive Menu (Recommended)
+
+The easiest way to use all three applications is through the interactive menu:
+
+```bash
+./menu.sh
+```
+
+The menu provides:
+- **Options 1-6**: jfr-file-based-app (traditional JFR, port 8080)
+- **Options 7-11**: jfr-stream-app (streaming to files, port 8081)
+- **Options 12-17**: jfr-stream-based-otel-app (OTLP streaming, port 8082)
+- **Options 18-20**: Shared tools (visualization, configuration, cleanup)
+
+See [MENU.md](MENU.md) for detailed menu documentation.
+
+### Manual Quick Start
+
+#### Option 1: Traditional JFR (jfr-file-based-app)
 
 ```bash
 cd apps/jfr-file-based-app
@@ -65,20 +83,7 @@ jcmd <PID> JFR.start name=MyRecording
 jcmd <PID> JFR.dump name=MyRecording filename=recording.jfr
 ```
 
-### Option 3: OTLP Export (jfr-stream-based-otel-app)
-
-```bash
-# Start an OTLP backend first (example: DevFiler)
-docker run -p 11000:11000 elastic/devfiler
-
-# In another terminal
-cd apps/jfr-stream-based-otel-app
-# Edit application.yaml to set jfr.otlp.endpoint=http://localhost:11000
-./run.sh
-
-# Check status
-curl http://localhost:8082/api/jfr/status
-```
+#### Option 2: Streaming JFR (jfr-stream-app)
 
 ```bash
 cd apps/jfr-stream-app
@@ -89,6 +94,25 @@ curl http://localhost:8081/api/jfr/status
 
 # Wait 15 seconds, then check exports
 ls -lh jfr-exports/
+```
+
+#### Option 3: OTLP Export (jfr-stream-based-otel-app)
+
+```bash
+# Start OTLP Collector with Docker Compose
+cd apps/jfr-stream-based-otel-app/docker
+./start-collector.sh
+
+# In another terminal
+cd apps/jfr-stream-based-otel-app
+./run.sh
+
+# Check status
+curl http://localhost:8082/api/jfr/status
+
+# View collector logs
+cd docker
+docker-compose logs -f
 ```
 
 ## Applications Comparison

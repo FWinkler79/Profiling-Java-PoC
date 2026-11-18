@@ -27,13 +27,21 @@ echo "  9) Generate load (port 8081, requires app running)"
 echo " 10) Check stream status / health (port 8081)"
 echo " 11) Merge JFR exports into single file"
 echo ""
+echo "── jfr-stream-based-otel-app (OTLP streaming, port 8082) ───────────────"
+echo " 12) Build jfr-stream-based-otel-app application"
+echo " 13) Start OTLP Collector (Docker)"
+echo " 14) Run jfr-stream-based-otel-app (streams to OTLP)"
+echo " 15) View OTLP Collector logs (live)"
+echo " 16) Check OTLP app status / health (port 8082)"
+echo " 17) Stop OTLP Collector"
+echo ""
 echo "── Shared tools ─────────────────────────────────────────────────────────"
-echo " 12) Visualize JFR files (interactive)"
-echo " 13) View JFR configuration"
-echo " 14) Clean up recordings and build artifacts"
+echo " 18) Visualize JFR files (interactive)"
+echo " 19) View JFR configuration"
+echo " 20) Clean up recordings and build artifacts"
 echo "  0) Exit"
 echo ""
-read -p "Enter choice (0-14): " choice
+read -p "Enter choice (0-20): " choice
 
 case $choice in
     # ── jfr-file-based-app (traditional, port 8080) ──
@@ -161,13 +169,100 @@ case $choice in
         ./merge-jfr-files.sh apps/jfr-stream-app/jfr-exports
         ;;
 
-    # ── Shared tools ──
+    # ── jfr-stream-based-otel-app (OTLP streaming, port 8082) ──
     12)
+        echo ""
+        echo "Building jfr-stream-based-otel-app application..."
+        cd apps/jfr-stream-based-otel-app
+        mvn clean package -DskipTests
+        cd ../..
+        echo ""
+        echo "Build complete! Run option 13 to start the OTLP collector first."
+        ;;
+
+    13)
+        echo ""
+        echo "Starting OTLP Collector (Docker)..."
+        echo ""
+        echo "This will:"
+        echo "  • Start OpenTelemetry Collector in Docker"
+        echo "  • Listen on port 4317 (OTLP gRPC)"
+        echo "  • Display received JFR profiling logs on console"
+        echo ""
+        cd apps/jfr-stream-based-otel-app/docker
+        ./start-collector.sh
+        cd ../../..
+        echo ""
+        echo "Collector started! Run option 14 to start the app."
+        ;;
+
+    14)
+        echo ""
+        echo "Starting jfr-stream-based-otel-app..."
+        echo ""
+        echo "This will:"
+        echo "  • Start continuous JFR recording"
+        echo "  • Export profiling events to OTLP Collector every 15s"
+        echo "  • Run on port 8082"
+        echo "  • No local files - streams directly to collector"
+        echo ""
+        echo "View collector logs with option 15"
+        echo ""
+        echo "Press Ctrl+C to stop the app"
+        echo ""
+        sleep 2
+        ./apps/jfr-stream-based-otel-app/run.sh
+        ;;
+
+    15)
+        echo ""
+        echo "Viewing OTLP Collector logs (live)..."
+        echo ""
+        echo "This will show JFR profiling events as they arrive."
+        echo "Press Ctrl+C to stop viewing (collector keeps running)"
+        echo ""
+        sleep 2
+        cd apps/jfr-stream-based-otel-app/docker
+        docker-compose logs -f
+        cd ../../..
+        ;;
+
+    16)
+        echo ""
+        echo "Checking jfr-stream-based-otel-app status / health (port 8082)..."
+        echo ""
+        echo "1. Health:"
+        echo "---"
+        curl -s "http://localhost:8082/api/jfr/health" | python3 -m json.tool || echo "Error: Is the app running?"
+        echo ""
+        echo ""
+        echo "2. Status:"
+        echo "---"
+        curl -s "http://localhost:8082/api/jfr/status" | python3 -m json.tool || echo "Error: Is the app running?"
+        echo ""
+        echo ""
+        echo "3. Collector Health:"
+        echo "---"
+        curl -s "http://localhost:13133" | python3 -m json.tool || echo "Error: Is the collector running?"
+        ;;
+
+    17)
+        echo ""
+        echo "Stopping OTLP Collector..."
+        cd apps/jfr-stream-based-otel-app/docker
+        docker-compose down
+        cd ../../..
+        echo ""
+        echo "Collector stopped!"
+        ;;
+
+    # ── Shared tools ──
+    18)
         echo ""
         ./view-jfr.sh
         ;;
 
-    13)
+    19)
         echo ""
         echo "JFR Configuration (jfr-config.jfc):"
         echo "─────────────────────────────────────────────────────────────"
@@ -185,7 +280,7 @@ case $choice in
         echo "Used by: start-continuous-profiling.sh"
         ;;
 
-    14)
+    20)
         echo ""
         echo "Cleaning up..."
         read -p "Delete jfr-file-based-app build artifacts (apps/jfr-file-based-app/target/)? [y/N]: " confirm
@@ -198,6 +293,12 @@ case $choice in
         if [[ $confirm =~ ^[Yy]$ ]]; then
             rm -rf apps/jfr-stream-app/target/
             echo "✓ Deleted apps/jfr-stream-app/target/"
+        fi
+
+        read -p "Delete jfr-stream-based-otel-app build artifacts (apps/jfr-stream-based-otel-app/target/)? [y/N]: " confirm
+        if [[ $confirm =~ ^[Yy]$ ]]; then
+            rm -rf apps/jfr-stream-based-otel-app/target/
+            echo "✓ Deleted apps/jfr-stream-based-otel-app/target/"
         fi
 
         read -p "Delete jfr-file-based-app exports (apps/jfr-file-based-app/jfr-exports/)? [y/N]: " confirm
@@ -222,6 +323,14 @@ case $choice in
         if [[ $confirm =~ ^[Yy]$ ]]; then
             rm -rf apps/jfr-stream-app/jfr-merged/
             echo "✓ Deleted apps/jfr-stream-app/jfr-merged/"
+        fi
+
+        read -p "Stop and remove OTLP Collector? [y/N]: " confirm
+        if [[ $confirm =~ ^[Yy]$ ]]; then
+            cd apps/jfr-stream-based-otel-app/docker
+            docker-compose down
+            cd ../../..
+            echo "✓ Stopped OTLP Collector"
         fi
 
         echo ""
