@@ -95,7 +95,7 @@ jfr metadata apps/jfr-profiler-based-app/jfr-exports/snapshot-001-*.jfr
 The `shell-scripts/view-jfr.sh` script can generate a basic HTML report from any `.jfr` file (option 5 in its menu). For richer output use JMC.
 
 ```bash
-./shell-scripts/view-jfr.sh
+./shell-scripts/view-jfr.sh apps/jfr-profiler-based-app/jfr-exports
 # → Option 5: Generate HTML Report
 
 # Then open in browser

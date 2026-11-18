@@ -16,7 +16,7 @@ After collecting JFR snapshots, visualize them with:
 ═══════════════════
 
 1. 🎯 Interactive Menu (No Install)
-   ./shell-scripts/view-jfr.sh
+   ./shell-scripts/view-jfr.sh apps/jfr-profiler-based-app/jfr-exports
    → Multiple options in one tool
    → Great for beginners
 
@@ -111,7 +111,7 @@ Find memory-intensive classes:
     grep "class" | sort | uniq -c | sort -rn | head -20
 
 Compare two snapshots:
-  ./shell-scripts/view-jfr.sh
+  ./shell-scripts/view-jfr.sh apps/jfr-profiler-based-app/jfr-exports
   → Option 7
 
 Export to JSON:
@@ -210,7 +210,7 @@ YOUR TURN!
 ══════════
 
 Try it now:
-  ./shell-scripts/view-jfr.sh
+  ./shell-scripts/view-jfr.sh apps/jfr-profiler-based-app/jfr-exports
 
 Happy profiling! 🚀
 

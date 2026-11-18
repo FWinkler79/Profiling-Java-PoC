@@ -2,6 +2,25 @@
 
 # JFR File Viewer Helper
 # Quick launcher for various JFR visualization tools
+#
+# Usage: ./shell-scripts/view-jfr.sh <folder>
+#   folder   Directory containing the .jfr files to view, e.g.:
+#     apps/jfr-profiler-based-app/jfr-exports
+#     apps/jfr-jdk-api-based-app/jfr-exports
+
+JFR_DIR="$1"
+
+if [ -z "$JFR_DIR" ]; then
+    echo "Usage: ./shell-scripts/view-jfr.sh <folder>"
+    echo "  e.g.: ./shell-scripts/view-jfr.sh apps/jfr-profiler-based-app/jfr-exports"
+    echo "        ./shell-scripts/view-jfr.sh apps/jfr-jdk-api-based-app/jfr-exports"
+    exit 1
+fi
+
+if [ ! -d "$JFR_DIR" ]; then
+    echo "Error: Folder '$JFR_DIR' does not exist."
+    exit 1
+fi
 
 show_menu() {
     cat << "EOF"
@@ -28,16 +47,9 @@ EOF
 
 find_jfr_files() {
     local files=()
-
-    # Search all apps' jfr-exports and jfr-merged directories
-    for dir in apps/*/jfr-exports apps/*/jfr-merged; do
-        if [ -d "$dir" ]; then
-            for f in "$dir"/*.jfr; do
-                [ -f "$f" ] && files+=("$f")
-            done
-        fi
+    for f in "$JFR_DIR"/*.jfr; do
+        [ -f "$f" ] && files+=("$f")
     done
-
     echo "${files[@]}"
 }
 
@@ -45,7 +57,7 @@ select_jfr_file() {
     local files=($(find_jfr_files))
 
     if [ ${#files[@]} -eq 0 ]; then
-        echo "No .jfr files found in apps/*/jfr-exports/ or apps/*/jfr-merged/"
+        echo "No .jfr files found in '$JFR_DIR'"
         return 1
     fi
 
