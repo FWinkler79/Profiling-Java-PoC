@@ -172,7 +172,7 @@ Shuts down the Docker collector:
 
 #### Option 27: Visualize JFR files (interactive)
 
-Prompts for which app's export directory to view, then launches `./shell-scripts/view-jfr.sh <folder>`:
+Prompts for which app's export directory to view, then launches `./shell-scripts/visualize-jfr.sh <folder>`:
 
 - Opens in JDK Mission Control (if installed)
 - Provides command-line summary, detailed print, JSON export, and comparison options
@@ -288,7 +288,7 @@ The menu calls these scripts:
 - `./apps/jfr-otel-logs-app/run.sh` - Option 14
 - `./apps/jfr-otel-logs-based-file-upload-app/docker/start-collector.sh` - Option 22
 - `./apps/jfr-otel-logs-based-file-upload-app/run.sh` - Option 23
-- `./shell-scripts/view-jfr.sh <folder>` - Option 27
+- `./shell-scripts/visualize-jfr.sh <folder>` - Option 27
 
 ## Docker Integration
 

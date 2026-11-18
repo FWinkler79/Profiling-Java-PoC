@@ -35,7 +35,7 @@ JFR-Test/
 │       └── docker/
 ├── shell-scripts/
 │   ├── merge-jfr-files.sh
-│   └── view-jfr.sh
+│   └── visualize-jfr.sh
 ├── python-scripts/
 │   ├── analyze-snapshots.py
 │   └── visualize-jfr.py

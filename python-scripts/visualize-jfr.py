@@ -1,328 +1,518 @@
 #!/usr/bin/env python3
 """
-JFR Event Visualizer
-Creates visual charts and statistics from JFR files using matplotlib
+JFR Visualizer
+Interactive tool for exploring and visualizing JFR recording files.
 """
 
 import subprocess
-import json
 import sys
+import json
 from pathlib import Path
-from collections import defaultdict, Counter
+from collections import Counter
 import re
 
-def check_dependencies():
-    """Check if required tools are available"""
-    missing = []
 
-    # Check for jfr command
+# ── JFR data extraction ────────────────────────────────────────────────────────
+
+def check_dependencies():
     try:
         subprocess.run(["jfr", "--version"], capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
-        missing.append("jfr (JDK 11+ required)")
-
-    if missing:
-        print("Missing dependencies:")
-        for dep in missing:
-            print(f"  - {dep}")
+        print("Error: 'jfr' command not found. JDK 11+ is required.")
         sys.exit(1)
 
-def get_jfr_summary(filepath):
-    """Get summary statistics from JFR file"""
+
+def run_jfr(args, timeout=60):
+    """Run a jfr command and return stdout, or None on failure."""
     try:
         result = subprocess.run(
-            ["jfr", "summary", str(filepath)],
-            capture_output=True,
-            text=True,
-            timeout=30
+            ["jfr"] + args,
+            capture_output=True, text=True, timeout=timeout
         )
-
-        if result.returncode != 0:
-            return None
-
-        return result.stdout
-
+        return result.stdout if result.returncode == 0 else None
     except Exception as e:
-        print(f"Error getting summary: {e}")
+        print(f"Error running jfr {' '.join(args)}: {e}")
         return None
 
-def parse_summary_stats(summary_text):
-    """Parse key statistics from summary output"""
-    stats = {
-        'duration': None,
-        'event_count': 0,
-        'event_types': {},
-    }
 
+def parse_summary_stats(summary_text):
+    stats = {'duration': None, 'event_count': 0, 'event_types': {}}
     for line in summary_text.splitlines():
         line = line.strip()
-
-        # Extract duration
         if 'Duration' in line or 'Recording' in line:
-            match = re.search(r'(\d+\.?\d*)\s*(s|ms|min)', line)
-            if match:
-                value = float(match.group(1))
-                unit = match.group(2)
+            m = re.search(r'(\d+\.?\d*)\s*(s|ms|min)', line)
+            if m:
+                value, unit = float(m.group(1)), m.group(2)
                 if unit == 'ms':
                     value /= 1000
                 elif unit == 'min':
                     value *= 60
                 stats['duration'] = value
-
-        # Count events by type
         if line.startswith('jdk.'):
             parts = line.split()
             if len(parts) >= 2:
-                event_name = parts[0]
                 try:
                     count = int(parts[1].replace(',', ''))
-                    stats['event_types'][event_name] = count
+                    stats['event_types'][parts[0]] = count
                     stats['event_count'] += count
                 except ValueError:
                     pass
-
     return stats
 
-def get_top_methods(filepath, limit=20):
-    """Extract top methods from execution samples"""
+
+def get_top_methods(filepath, limit=15):
+    output = run_jfr(["print", "--events", "jdk.ExecutionSample", str(filepath)])
+    if not output:
+        return []
+    method_counts = Counter()
+    for line in output.splitlines():
+        if 'at ' in line or '  ' in line:
+            m = re.search(r'([a-zA-Z_$][a-zA-Z0-9_$]*\.)+[a-zA-Z_$][a-zA-Z0-9_$]*\([^)]*\)', line)
+            if m:
+                method = m.group(0).split('(')[0]
+                method_counts[method] += 1
+    return method_counts.most_common(limit)
+
+
+def get_allocation_stats(filepath, limit=15):
+    output = run_jfr(["print", "--events", "jdk.ObjectAllocationInNewTLAB", str(filepath)])
+    if not output:
+        return {}
+    class_counts = Counter()
+    for line in output.splitlines():
+        m = re.search(r'class\s*=\s*([a-zA-Z_$][a-zA-Z0-9_$.<>\[\]]*)', line)
+        if m:
+            name = m.group(1)
+            class_counts[name.split('.')[-1]] += 1
+    return dict(class_counts.most_common(limit))
+
+
+# ── Display helpers ────────────────────────────────────────────────────────────
+
+def divider(char='─'):
+    print(char * 80)
+
+
+def select_file(jfr_dir):
+    """Let the user pick a single file from jfr_dir. Returns Path or None."""
+    files = sorted(jfr_dir.glob("*.jfr"), key=lambda f: f.stat().st_mtime, reverse=True)
+    if not files:
+        print(f"No .jfr files found in '{jfr_dir}'")
+        return None
+    print()
+    print("Available JFR files:")
+    divider()
+    for i, f in enumerate(files, 1):
+        size_mb = f.stat().st_size / (1024 * 1024)
+        print(f"  {i:2d}) {f.name} ({size_mb:.2f} MB)")
+    print()
     try:
-        result = subprocess.run(
-            ["jfr", "print", "--events", "jdk.ExecutionSample", str(filepath)],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
+        raw = input("Select file number: ").strip()
+        idx = int(raw) - 1
+        if 0 <= idx < len(files):
+            return files[idx]
+        print("Invalid selection.")
+        return None
+    except (ValueError, KeyboardInterrupt):
+        print()
+        return None
 
-        if result.returncode != 0:
-            return []
 
-        # Parse method names from stack traces
-        method_counts = Counter()
-
-        for line in result.stdout.splitlines():
-            # Look for method signatures
-            if 'at ' in line or '  ' in line:
-                # Extract method name
-                match = re.search(r'([a-zA-Z_$][a-zA-Z0-9_$]*\.)+[a-zA-Z_$][a-zA-Z0-9_$]*\([^)]*\)', line)
-                if match:
-                    method = match.group(0)
-                    # Simplify method name
-                    if '(' in method:
-                        method = method.split('(')[0]
-                    method_counts[method] += 1
-
-        return method_counts.most_common(limit)
-
-    except Exception as e:
-        print(f"Error extracting methods: {e}")
+def select_file_or_all(jfr_dir):
+    """Let the user pick one file or all files. Returns list of Paths."""
+    files = sorted(jfr_dir.glob("*.jfr"), key=lambda f: f.stat().st_mtime, reverse=True)
+    if not files:
+        print(f"No .jfr files found in '{jfr_dir}'")
+        return []
+    print()
+    print("Available JFR files:")
+    divider()
+    for i, f in enumerate(files, 1):
+        size_mb = f.stat().st_size / (1024 * 1024)
+        print(f"  {i:2d}) {f.name} ({size_mb:.2f} MB)")
+    print()
+    try:
+        raw = input("Select file number (or 'a' for all): ").strip()
+        if raw.lower() == 'a':
+            return files
+        idx = int(raw) - 1
+        if 0 <= idx < len(files):
+            return [files[idx]]
+        print("Invalid selection.")
+        return []
+    except (ValueError, KeyboardInterrupt):
+        print()
         return []
 
-def get_allocation_stats(filepath):
-    """Get allocation statistics"""
-    try:
-        result = subprocess.run(
-            ["jfr", "print", "--events", "jdk.ObjectAllocationInNewTLAB", str(filepath)],
-            capture_output=True,
-            text=True,
-            timeout=30
-        )
 
-        if result.returncode != 0:
-            return {}
+# ── Menu actions ───────────────────────────────────────────────────────────────
 
-        class_counts = Counter()
+def action_ascii_stats(jfr_dir):
+    filepath = select_file(jfr_dir)
+    if not filepath:
+        return
 
-        for line in result.stdout.splitlines():
-            # Look for class names
-            match = re.search(r'class\s*=\s*([a-zA-Z_$][a-zA-Z0-9_$.<>[\]]*)', line)
-            if match:
-                class_name = match.group(1)
-                # Simplify class name
-                if '.' in class_name:
-                    class_name = class_name.split('.')[-1]
-                class_counts[class_name] += 1
-
-        return dict(class_counts.most_common(15))
-
-    except Exception as e:
-        print(f"Error getting allocation stats: {e}")
-        return {}
-
-def visualize_ascii(filepath):
-    """Create ASCII visualization of JFR data"""
     print(f"\n{'='*80}")
-    print(f"JFR VISUALIZATION: {filepath.name}")
+    print(f"JFR STATISTICS: {filepath.name}")
     print('='*80)
 
-    # Get summary
     print("\nFetching summary...")
-    summary_text = get_jfr_summary(filepath)
-
+    summary_text = run_jfr(["summary", str(filepath)])
     if not summary_text:
-        print("Could not get summary from file")
+        print("Could not get summary from file.")
         return
 
     stats = parse_summary_stats(summary_text)
 
-    # Basic stats
-    print(f"\n{'─'*80}")
+    print()
+    divider()
     print("RECORDING STATISTICS")
-    print('─'*80)
-
+    divider()
     if stats['duration']:
         print(f"Duration:     {stats['duration']:.2f} seconds")
     print(f"Total Events: {stats['event_count']:,}")
-
     size_bytes = filepath.stat().st_size
-    size_mb = size_bytes / (1024 * 1024)
-    print(f"File Size:    {size_bytes:,} bytes ({size_mb:.2f} MB)")
-
+    print(f"File Size:    {size_bytes:,} bytes ({size_bytes / (1024*1024):.2f} MB)")
     if stats['event_count'] > 0:
-        bytes_per_event = size_bytes / stats['event_count']
-        print(f"Bytes/Event:  {bytes_per_event:.1f}")
+        print(f"Bytes/Event:  {size_bytes / stats['event_count']:.1f}")
 
-    # Event type distribution
     if stats['event_types']:
-        print(f"\n{'─'*80}")
+        print()
+        divider()
         print("TOP EVENT TYPES")
-        print('─'*80)
-
-        # Sort by count
+        divider()
         sorted_events = sorted(stats['event_types'].items(), key=lambda x: x[1], reverse=True)
-
         max_count = max(stats['event_types'].values())
-        bar_width = 50
+        for i, (name, count) in enumerate(sorted_events[:15], 1):
+            bar = '█' * int((count / max_count) * 50)
+            display = name.replace('jdk.', '')[:30]
+            pct = (count / stats['event_count']) * 100
+            print(f"{i:2d}. {display:30s} │{bar:50s}│ {count:8,} ({pct:5.1f}%)")
 
-        for i, (event_name, count) in enumerate(sorted_events[:15], 1):
-            bar_length = int((count / max_count) * bar_width)
-            bar = '█' * bar_length
-            percent = (count / stats['event_count']) * 100
-
-            # Shorten event name
-            display_name = event_name.replace('jdk.', '')
-            if len(display_name) > 30:
-                display_name = display_name[:27] + '...'
-
-            print(f"{i:2d}. {display_name:30s} │{bar:50s}│ {count:8,} ({percent:5.1f}%)")
-
-    # Method profiling
-    print(f"\n{'─'*80}")
+    print()
+    divider()
     print("TOP METHODS (from execution samples)")
-    print('─'*80)
+    divider()
     print("Extracting method data...")
-
-    top_methods = get_top_methods(filepath, limit=15)
-
+    top_methods = get_top_methods(filepath)
     if top_methods:
         max_count = top_methods[0][1]
-        bar_width = 40
-
         for i, (method, count) in enumerate(top_methods, 1):
-            bar_length = int((count / max_count) * bar_width)
-            bar = '▓' * bar_length
-
-            # Shorten method name
-            display_name = method
-            if len(display_name) > 50:
-                display_name = '...' + display_name[-47:]
-
-            print(f"{i:2d}. {display_name:50s} │{bar:40s}│ {count:6,}")
+            bar = '▓' * int((count / max_count) * 40)
+            display = ('...' + method[-47:]) if len(method) > 50 else method
+            print(f"{i:2d}. {display:50s} │{bar:40s}│ {count:6,}")
     else:
-        print("No method profiling data available")
+        print("No method profiling data available.")
 
-    # Allocation hotspots
-    print(f"\n{'─'*80}")
+    print()
+    divider()
     print("ALLOCATION HOTSPOTS (classes)")
-    print('─'*80)
+    divider()
     print("Extracting allocation data...")
-
     allocations = get_allocation_stats(filepath)
-
     if allocations:
         max_count = max(allocations.values())
-        bar_width = 35
-
-        for i, (class_name, count) in enumerate(allocations.items(), 1):
-            bar_length = int((count / max_count) * bar_width)
-            bar = '░' * bar_length
-
-            display_name = class_name
-            if len(display_name) > 40:
-                display_name = display_name[:37] + '...'
-
-            print(f"{i:2d}. {display_name:40s} │{bar:35s}│ {count:6,}")
+        for i, (cls, count) in enumerate(allocations.items(), 1):
+            bar = '░' * int((count / max_count) * 35)
+            display = cls[:40]
+            print(f"{i:2d}. {display:40s} │{bar:35s}│ {count:6,}")
     else:
-        print("No allocation data available")
+        print("No allocation data available.")
 
     print(f"\n{'='*80}\n")
 
-def main():
-    print("="*80)
-    print("JFR EVENT VISUALIZER")
-    print("="*80)
 
-    # Check dependencies
+def action_summary(jfr_dir):
+    filepath = select_file(jfr_dir)
+    if not filepath:
+        return
+    print(f"\nJFR Summary for: {filepath.name}")
+    divider('═')
+    output = run_jfr(["summary", str(filepath)])
+    if output:
+        lines = output.splitlines()
+        print('\n'.join(lines[:100]))
+        if len(lines) > 100:
+            print(f"\n(Showing first 100 lines. Full output: jfr summary {filepath})")
+    else:
+        print("Could not get summary.")
+
+
+def action_detailed_print(jfr_dir):
+    filepath = select_file(jfr_dir)
+    if not filepath:
+        return
+
+    print()
+    print("What would you like to view?")
+    print("  1) Method profiling (ExecutionSample)")
+    print("  2) Memory allocations")
+    print("  3) Garbage collection")
+    print("  4) Thread events")
+    print("  5) I/O events")
+    print("  6) All events")
+    print()
+    try:
+        choice = input("Select (1-6): ").strip()
+    except KeyboardInterrupt:
+        print()
+        return
+
+    event_map = {
+        '1': 'jdk.ExecutionSample',
+        '2': 'jdk.ObjectAllocationInNewTLAB,jdk.ObjectAllocationOutsideTLAB',
+        '3': 'jdk.GarbageCollection,jdk.YoungGarbageCollection,jdk.OldGarbageCollection',
+        '4': 'jdk.ThreadStart,jdk.ThreadEnd,jdk.ThreadPark',
+        '5': 'jdk.FileRead,jdk.FileWrite,jdk.SocketRead,jdk.SocketWrite',
+    }
+
+    if choice in event_map:
+        args = ["print", "--events", event_map[choice], str(filepath)]
+    elif choice == '6':
+        args = ["print", str(filepath)]
+    else:
+        print("Invalid choice.")
+        return
+
+    output = run_jfr(args, timeout=120)
+    if output:
+        # Page output with a simple pager
+        lines = output.splitlines()
+        page = 40
+        for i in range(0, len(lines), page):
+            print('\n'.join(lines[i:i+page]))
+            if i + page < len(lines):
+                try:
+                    raw = input("\n-- Press Enter for more, q to quit -- ").strip()
+                    if raw.lower() == 'q':
+                        break
+                except KeyboardInterrupt:
+                    break
+    else:
+        print("No output or error running jfr print.")
+
+
+def action_export_json(jfr_dir):
+    filepath = select_file(jfr_dir)
+    if not filepath:
+        return
+
+    output_path = filepath.with_suffix('.json')
+    print(f"\nExporting to JSON: {output_path}")
+    output = run_jfr(["print", "--json", str(filepath)], timeout=120)
+    if output:
+        output_path.write_text(output)
+        size = output_path.stat().st_size / (1024 * 1024)
+        print(f"✓ Exported: {output_path} ({size:.2f} MB)")
+    else:
+        print("Export failed.")
+
+
+def action_html_report(jfr_dir):
+    files = select_file_or_all(jfr_dir)
+    if not files:
+        return
+
+    if len(files) == 1:
+        output_path = files[0].with_suffix('.html')
+    else:
+        from datetime import datetime
+        output_path = jfr_dir / f"jfr-report-{datetime.now().strftime('%Y%m%d-%H%M%S')}.html"
+
+    print(f"\nGenerating HTML report for {len(files)} file(s)...")
+
+    parts = ['<!DOCTYPE html><html><head><title>JFR Report</title><style>',
+             'body{font-family:monospace;padding:20px;background:#1e1e1e;color:#d4d4d4}',
+             'pre{background:#2d2d2d;padding:15px;overflow-x:auto;border-radius:5px}',
+             'h1,h2{color:#4ec9b0}h3{color:#569cd6}',
+             '.section{margin:20px 0}.file-section{border-left:3px solid #4ec9b0;padding-left:15px;margin:30px 0}',
+             '</style></head><body><h1>JFR Recording Report</h1>']
+
+    for f in files:
+        print(f"  Processing: {f.name}")
+        size = f.stat().st_size / (1024 * 1024)
+        summary = run_jfr(["summary", str(f)]) or "(summary unavailable)"
+        parts.append(f'<div class="file-section"><h2>{f.name}</h2>')
+        parts.append(f'<div class="section"><h3>File Information</h3><pre>File: {f.name}\nSize: {size:.2f} MB</pre></div>')
+        parts.append(f'<div class="section"><h3>Summary</h3><pre>{summary}</pre></div></div>')
+
+    parts.append('</body></html>')
+    output_path.write_text('\n'.join(parts))
+    print(f"✓ Generated: {output_path}")
+
+
+def action_list_files(jfr_dir):
+    files = sorted(jfr_dir.glob("*.jfr"), key=lambda f: f.stat().st_mtime, reverse=True)
+    print()
+    print("Available JFR files:")
+    divider('═')
+    if not files:
+        print("No .jfr files found.")
+        return
+    for f in files:
+        size = f.stat().st_size / (1024 * 1024)
+        mtime = f.stat().st_mtime
+        import time
+        ts = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(mtime))
+        print(f"  {f.name:<55} {size:6.2f} MB  {ts}")
+    print(f"\nTotal: {len(files)} file(s)")
+
+
+def action_compare(jfr_dir):
+    print("\nSelect first file:")
+    f1 = select_file(jfr_dir)
+    if not f1:
+        return
+    print("\nSelect second file:")
+    f2 = select_file(jfr_dir)
+    if not f2:
+        return
+
+    s1 = f1.stat().st_size
+    s2 = f2.stat().st_size
+    diff = s2 - s1
+    pct = (diff * 100 / s1) if s1 else 0
+
+    print()
+    divider('═')
+    print(f"File 1: {f1.name}  ({s1:,} bytes)")
+    print(f"File 2: {f2.name}  ({s2:,} bytes)")
+    print(f"Difference: {diff:+,} bytes ({pct:+.1f}%)")
+    divider()
+
+    try:
+        raw = input("Show event type counts for both? [y/N]: ").strip()
+    except KeyboardInterrupt:
+        print()
+        return
+
+    if raw.lower() == 'y':
+        for label, f in [("File 1", f1), ("File 2", f2)]:
+            output = run_jfr(["summary", str(f)])
+            if output:
+                stats = parse_summary_stats(output)
+                print(f"\n{label} — {f.name}")
+                for name, count in sorted(stats['event_types'].items(), key=lambda x: x[1], reverse=True)[:10]:
+                    print(f"  {name:<45} {count:>8,}")
+
+
+def action_event_types(jfr_dir):
+    filepath = select_file(jfr_dir)
+    if not filepath:
+        return
+    output = run_jfr(["metadata", str(filepath)])
+    if not output:
+        print("Could not read metadata.")
+        return
+    print(f"\nEvent types in: {filepath.name}")
+    divider('═')
+    types = sorted(line.strip() for line in output.splitlines() if 'jdk.' in line)
+    for t in types:
+        print(f"  {t}")
+    print(f"\nTotal: {len(types)} event type(s)")
+
+
+def action_install_jmc():
+    print()
+    if sys.platform == 'darwin':
+        print("Installing JDK Mission Control via Homebrew...")
+        subprocess.run(["brew", "install", "--cask", "jdk-mission-control"])
+    elif sys.platform.startswith('linux'):
+        print("Download JMC from: https://jdk.java.net/jmc/")
+        print("Or via package manager:")
+        print("  Ubuntu/Debian: sudo apt install jmc")
+        print("  Fedora:        sudo dnf install jmc")
+    else:
+        print("Download JMC from: https://jdk.java.net/jmc/")
+
+
+def action_open_jmc(jfr_dir):
+    filepath = select_file(jfr_dir)
+    if not filepath:
+        return
+    print(f"\nOpening {filepath.name} in JDK Mission Control...")
+    launched = False
+    for cmd in ["jmc", "jmc.app"]:
+        if subprocess.run(["which", cmd], capture_output=True).returncode == 0:
+            subprocess.Popen([cmd, "-open", str(filepath)])
+            launched = True
+            break
+    if not launched and sys.platform == 'darwin':
+        app = "/Applications/JDK Mission Control.app"
+        if Path(app).exists():
+            subprocess.Popen(["open", "-a", "JDK Mission Control", str(filepath)])
+            launched = True
+    if launched:
+        print("✓ JMC launched")
+    else:
+        print("✗ JMC not found. Install it with option 9 or download from: https://jdk.java.net/jmc/")
+
+
+# ── Main ───────────────────────────────────────────────────────────────────────
+
+def show_menu():
+    print()
+    print("╔═══════════════════════════════════════════════════════════════════════╗")
+    print("║                    JFR File Visualization Tools                       ║")
+    print("╚═══════════════════════════════════════════════════════════════════════╝")
+    print()
+    print("  1) ASCII stats (event distribution, hot methods, allocations)")
+    print("  2) Summary (jfr summary)")
+    print("  3) Detailed event print (jfr print)")
+    print("  4) Export to JSON")
+    print("  5) Generate HTML report")
+    print("  6) List all .jfr files")
+    print("  7) Compare two snapshots")
+    print("  8) View event types in recording")
+    print("  9) Open in JDK Mission Control (JMC) - RECOMMENDED")
+    print(" 10) Install JMC (macOS/Linux)")
+    print("  0) Exit")
+    print()
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: visualize-jfr.py <folder>")
+        print("  e.g.: visualize-jfr.py apps/jfr-profiler-based-app/jfr-exports")
+        sys.exit(1)
+
+    jfr_dir = Path(sys.argv[1])
+    if not jfr_dir.is_dir():
+        print(f"Error: '{jfr_dir}' is not a directory.")
+        sys.exit(1)
+
     check_dependencies()
 
-    # Find JFR files
-    jfr_files = []
-    for directory in ['jfr-snapshots', 'jfr-recordings', '.']:
-        path = Path(directory)
-        if path.exists():
-            jfr_files.extend(path.glob('*.jfr'))
-
-    if not jfr_files:
-        print("\nNo .jfr files found in current directory, jfr-snapshots/, or jfr-recordings/")
-        if len(sys.argv) > 1:
-            filepath = Path(sys.argv[1])
-            if filepath.exists():
-                jfr_files = [filepath]
-            else:
-                print(f"File not found: {sys.argv[1]}")
-                sys.exit(1)
-        else:
-            sys.exit(1)
-
-    # Sort by modification time
-    jfr_files = sorted(jfr_files, key=lambda f: f.stat().st_mtime, reverse=True)
-
-    # Select file
-    if len(sys.argv) > 1:
-        filepath = Path(sys.argv[1])
-        if not filepath.exists():
-            print(f"File not found: {sys.argv[1]}")
-            sys.exit(1)
-    else:
-        print("\nAvailable JFR files:")
-        for i, f in enumerate(jfr_files[:20], 1):
-            size = f.stat().st_size / (1024 * 1024)
-            print(f"  {i:2d}. {f.name} ({size:.2f} MB)")
-
-        if len(jfr_files) > 20:
-            print(f"  ... and {len(jfr_files) - 20} more")
-
+    while True:
+        show_menu()
         try:
-            choice = input("\nSelect file number (or press Enter for most recent): ").strip()
-
-            if not choice:
-                filepath = jfr_files[0]
-            else:
-                idx = int(choice) - 1
-                if 0 <= idx < len(jfr_files):
-                    filepath = jfr_files[idx]
-                else:
-                    print("Invalid selection")
-                    sys.exit(1)
-
-        except (ValueError, KeyboardInterrupt):
-            print("\nCancelled")
+            choice = input(f"Enter choice (0-10) [{jfr_dir}]: ").strip()
+        except KeyboardInterrupt:
+            print("\nGoodbye!")
             sys.exit(0)
 
-    # Visualize
-    visualize_ascii(filepath)
+        if   choice == '1': action_ascii_stats(jfr_dir)
+        elif choice == '2': action_summary(jfr_dir)
+        elif choice == '3': action_detailed_print(jfr_dir)
+        elif choice == '4': action_export_json(jfr_dir)
+        elif choice == '5': action_html_report(jfr_dir)
+        elif choice == '6': action_list_files(jfr_dir)
+        elif choice == '7': action_compare(jfr_dir)
+        elif choice == '8': action_event_types(jfr_dir)
+        elif choice == '9': action_open_jmc(jfr_dir)
+        elif choice == '10': action_install_jmc()
+        elif choice == '0':
+            print("Goodbye!")
+            sys.exit(0)
+        else:
+            print("Invalid choice.")
 
-    print("TIP: For interactive visualization, use JDK Mission Control:")
-    print(f"  jmc -open {filepath}")
+        try:
+            input("\nPress Enter to continue...")
+        except KeyboardInterrupt:
+            print("\nGoodbye!")
+            sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

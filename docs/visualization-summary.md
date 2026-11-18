@@ -9,14 +9,14 @@ QUICK START
 
 After collecting JFR snapshots, visualize them with:
 
-  ./shell-scripts/view-jfr.sh             ← Interactive menu (START HERE!)
+  ./shell-scripts/visualize-jfr.sh             ← Interactive menu (START HERE!)
 
 
 4 WAYS TO VISUALIZE
 ═══════════════════
 
 1. 🎯 Interactive Menu (No Install)
-   ./shell-scripts/view-jfr.sh apps/jfr-profiler-based-app/jfr-exports
+   ./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports
    → Multiple options in one tool
    → Great for beginners
 
@@ -40,7 +40,7 @@ After collecting JFR snapshots, visualize them with:
 WHAT EACH TOOL SHOWS YOU
 ═════════════════════════
 
-view-jfr.sh:
+visualize-jfr.sh:
   ✓ File selection menu
   ✓ All command line options
   ✓ File comparison
@@ -111,7 +111,7 @@ Find memory-intensive classes:
     grep "class" | sort | uniq -c | sort -rn | head -20
 
 Compare two snapshots:
-  ./shell-scripts/view-jfr.sh apps/jfr-profiler-based-app/jfr-exports
+  ./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports
   → Option 7
 
 Export to JSON:
@@ -122,7 +122,7 @@ FILES IN THIS PROJECT
 ═════════════════════
 
 Visualization Tools:
-  view-jfr.sh              Interactive menu
+  visualize-jfr.sh              Interactive menu
   visualize-jfr.sh        ASCII visualization
   analyze-snapshots.sh    Size analysis
 
@@ -210,7 +210,7 @@ YOUR TURN!
 ══════════
 
 Try it now:
-  ./shell-scripts/view-jfr.sh apps/jfr-profiler-based-app/jfr-exports
+  ./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports
 
 Happy profiling! 🚀
 

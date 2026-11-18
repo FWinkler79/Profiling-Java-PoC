@@ -76,7 +76,7 @@ JFR-Test/
 │   └── jfr-on-the-fly-snapshots.md  # On-the-fly snapshot notes
 ├── shell-scripts/
 │   ├── merge-jfr-files.sh           # Merge JFR exports (general purpose)
-│   └── view-jfr.sh                  # Interactive JFR viewer (general purpose)
+│   └── visualize-jfr.sh                  # Interactive JFR viewer (general purpose)
 ├── python-scripts/
 │   ├── analyze-snapshots.py         # Snapshot analyzer (general purpose)
 │   └── visualize-jfr.py             # JFR visualizer (general purpose)

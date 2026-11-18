@@ -366,10 +366,10 @@ case $choice in
         echo ""
         read -p "Enter choice (1-4): " jfr_dir_choice
         case $jfr_dir_choice in
-            1) ./shell-scripts/view-jfr.sh apps/jfr-profiler-based-app/jfr-exports ;;
-            2) ./shell-scripts/view-jfr.sh apps/jfr-profiler-based-app/jfr-merged ;;
-            3) ./shell-scripts/view-jfr.sh apps/jfr-jdk-api-based-app/jfr-exports ;;
-            4) ./shell-scripts/view-jfr.sh apps/jfr-jdk-api-based-app/jfr-merged ;;
+            1) ./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports ;;
+            2) ./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-merged ;;
+            3) ./shell-scripts/visualize-jfr.sh apps/jfr-jdk-api-based-app/jfr-exports ;;
+            4) ./shell-scripts/visualize-jfr.sh apps/jfr-jdk-api-based-app/jfr-merged ;;
             *) echo "Invalid choice" ;;
         esac
         ;;

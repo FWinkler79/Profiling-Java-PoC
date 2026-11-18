@@ -4,7 +4,7 @@
 
 ### Method 1: Interactive Menu (Easiest)
 ```bash
-./shell-scripts/view-jfr.sh apps/jfr-profiler-based-app/jfr-exports
+./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports
 ```
 This launches an interactive menu with all visualization options.
 
@@ -130,7 +130,7 @@ jfr print --events jdk.GarbageCollection apps/jfr-profiler-based-app/jfr-exports
 
 **Using our tool:**
 ```bash
-./shell-scripts/view-jfr.sh apps/jfr-profiler-based-app/jfr-exports
+./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports
 # Choose option 7 (Compare)
 ```
 
@@ -256,7 +256,7 @@ brew install --cask jdk-mission-control  # macOS
 
 1. **Practice with the tools:**
    ```bash
-   ./shell-scripts/view-jfr.sh apps/jfr-profiler-based-app/jfr-exports
+   ./shell-scripts/visualize-jfr.sh apps/jfr-profiler-based-app/jfr-exports
    ```
 
 2. **Read the full guide:**
@@ -279,7 +279,7 @@ brew install --cask jdk-mission-control  # macOS
 
 | Task | Command |
 |------|---------|
-| Interactive menu | `./shell-scripts/view-jfr.sh <folder>` |
+| Interactive menu | `./shell-scripts/visualize-jfr.sh <folder>` |
 | ASCII visualization | `./shell-scripts/visualize-jfr.sh <file.jfr>` |
 | Quick summary | `jfr summary file.jfr` |
 | Open in JMC | `jmc -open file.jfr` |
