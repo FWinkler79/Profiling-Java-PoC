@@ -18,7 +18,7 @@ This application uses the `jdk.jfr` API to create a continuous recording that:
 - **Periodic Exports**: Spring `@Scheduled` task exports snapshots at configurable intervals
 - **Event Counting**: Tracks the number of events exported in each snapshot
 - **REST API**: Endpoints to check recording status and statistics
-- **Configurable**: All parameters can be adjusted via `application.properties`
+- **Configurable**: All parameters can be adjusted via `application.yaml`
 
 ## Requirements
 
@@ -48,7 +48,7 @@ java -jar target/jfr-stream-app-1.0.0.jar
 
 ## Configuration
 
-Edit `src/main/resources/application.properties` to customize:
+Edit `src/main/resources/application.yaml` to customize:
 
 ```properties
 # Directory where JFR files will be exported
@@ -209,7 +209,7 @@ Example log output:
 **Export directory permission issues?**
 
 - Check write permissions for the configured export directory
-- Use an absolute path in `application.properties` if needed
+- Use an absolute path in `application.yaml` if needed
 
 ## Performance Impact
 
