@@ -263,7 +263,7 @@ brew install --cask jdk-mission-control  # macOS
 
 2. **Read the full guide:**
    ```bash
-   cat VISUALIZATION-GUIDE.md
+   cat docs/visualization-guide.md
    ```
 
 3. **Install JMC for best experience:**

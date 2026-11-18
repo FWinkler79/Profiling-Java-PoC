@@ -13,7 +13,7 @@ JFR-Test/
 │   └── jfr-jdk-api-based-app/      # Programmatic JFR with continuous streaming
 │       ├── jfr-exports/     # Exported snapshots (generated)
 │       └── jfr-merged/      # Merged recordings (generated)
-├── PROJECT-OVERVIEW.md      # This file
+├── docs/project-overview.md  # This file
 └── README.md                # Main project README
 ```
 

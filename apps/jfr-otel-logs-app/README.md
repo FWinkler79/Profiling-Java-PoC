@@ -299,7 +299,7 @@ The current log-based approach provides full functionality and is production-rea
 ## Related Documentation
 
 - [Main Project README](../../README.md)
-- [PROJECT-OVERVIEW.md](../../PROJECT-OVERVIEW.md)
+- [docs/project-overview.md](../../docs/project-overview.md)
 - [jfr-stream-app](../jfr-stream-app/README.md) - File-based streaming version
 - [OpenTelemetry Profiles Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/profiles/profiles.md)
 

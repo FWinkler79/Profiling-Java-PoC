@@ -201,7 +201,7 @@ Both approaches use the same underlying JFR technology:
 ## Documentation Files
 
 - **README.md** - Main project overview
-- **PROJECT-OVERVIEW.md** - Detailed comparison and architecture
+- **[docs/project-overview.md](project-overview.md)** - Detailed comparison and architecture
 - **apps/jfr-profiler-based-app/README.md** - Traditional JFR documentation
 - **apps/jfr-jdk-api-based-app/README.md** - Streaming JFR documentation
 - **apps/jfr-jdk-api-based-app/ARCHITECTURE.md** - Architecture diagrams

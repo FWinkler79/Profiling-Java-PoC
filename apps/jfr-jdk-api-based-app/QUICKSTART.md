@@ -219,7 +219,7 @@ server.port=8081
 
 - `README.md` - Full documentation
 - `ARCHITECTURE.md` - Architecture diagrams and data flow
-- `/Users/D056076/temp/JFR-Test/PROJECT-OVERVIEW.md` - Comparison with the first application
+- `docs/project-overview.md` - Comparison with the first application
 
 ## Built Successfully
 

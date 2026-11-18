@@ -62,13 +62,23 @@ JFR-Test/
 │       ├── README.md                    # Detailed documentation
 │       └── QUICKSTART.md               # Quick start guide
 │
+├── docs/
+│   ├── menu.md                      # Menu script reference
+│   ├── project-overview.md          # Detailed comparison and architecture
+│   ├── project-summary.md           # Project summary
+│   ├── quick-reference.md           # JFR quick reference
+│   ├── quickstart-visualization.md  # Visualization quick start
+│   ├── visual-guide.md              # JFR snapshot mechanism
+│   ├── visualization-guide.md       # JFR visualization guide
+│   ├── visualization-summary.md     # Visualization summary
+│   └── jfr-on-the-fly-snapshots.md  # On-the-fly snapshot notes
 ├── shell-scripts/
 │   ├── merge-jfr-files.sh           # Merge JFR exports (general purpose)
 │   └── view-jfr.sh                  # Interactive JFR viewer (general purpose)
 ├── python-scripts/
 │   ├── analyze-snapshots.py         # Snapshot analyzer (general purpose)
 │   └── visualize-jfr.py             # JFR visualizer (general purpose)
-├── PROJECT-OVERVIEW.md          # Detailed comparison
+├── menu.sh                      # Interactive control panel
 └── README.md                    # This file
 ```
 
@@ -96,7 +106,7 @@ The menu provides:
 - **Options 12-17**: jfr-otel-logs-app (OTLP streaming, port 8080)
 - **Options 18-20**: Shared tools (visualization, configuration, cleanup)
 
-See [MENU.md](MENU.md) for detailed menu documentation.
+See [docs/menu.md](docs/menu.md) for detailed menu documentation.
 
 ### Manual Quick Start
 
@@ -261,12 +271,29 @@ Profiles are exported to the OTLP backend and can be viewed in:
 
 ## Documentation
 
-- **[PROJECT-OVERVIEW.md](PROJECT-OVERVIEW.md)** - Detailed comparison and architecture
-- **[apps/jfr-profiler-based-app/README.md](apps/jfr-profiler-based-app/README.md)** - Traditional JFR documentation
-- **[apps/jfr-jdk-api-based-app/README.md](apps/jfr-jdk-api-based-app/README.md)** - Streaming JFR documentation
-- **[apps/jfr-jdk-api-based-app/ARCHITECTURE.md](apps/jfr-jdk-api-based-app/ARCHITECTURE.md)** - Architecture diagrams
-- **[apps/jfr-otel-logs-app/README.md](apps/jfr-otel-logs-app/README.md)** - OTLP export documentation
-- **[apps/jfr-otel-logs-app/QUICKSTART.md](apps/jfr-otel-logs-app/QUICKSTART.md)** - Quick start guide
+### Project
+
+- **[docs/project-overview.md](docs/project-overview.md)** — Detailed comparison and architecture of all apps
+- **[docs/project-summary.md](docs/project-summary.md)** — High-level project summary
+- **[docs/menu.md](docs/menu.md)** — Full menu.sh reference (all options, workflows, tips)
+
+### JFR Analysis
+
+- **[docs/quick-reference.md](docs/quick-reference.md)** — JFR snapshot size control and key concepts
+- **[docs/visual-guide.md](docs/visual-guide.md)** — JFR snapshot mechanism explained visually
+- **[docs/visualization-guide.md](docs/visualization-guide.md)** — Complete guide to visualizing JFR files (JMC, CLI, JSON)
+- **[docs/quickstart-visualization.md](docs/quickstart-visualization.md)** — Fastest paths to visualizing JFR data
+- **[docs/visualization-summary.md](docs/visualization-summary.md)** — Quick reference card for visualization methods
+- **[docs/jfr-on-the-fly-snapshots.md](docs/jfr-on-the-fly-snapshots.md)** — Notes on in-memory JFR snapshot access
+
+### Per-Application
+
+- **[apps/jfr-profiler-based-app/README.md](apps/jfr-profiler-based-app/README.md)** — Traditional JFR
+- **[apps/jfr-jdk-api-based-app/README.md](apps/jfr-jdk-api-based-app/README.md)** — Streaming JFR to files
+- **[apps/jfr-jdk-api-based-app/ARCHITECTURE.md](apps/jfr-jdk-api-based-app/ARCHITECTURE.md)** — Architecture diagrams
+- **[apps/jfr-otel-logs-app/README.md](apps/jfr-otel-logs-app/README.md)** — OTLP logs export
+- **[apps/jfr-otel-logs-based-file-upload-app/README.md](apps/jfr-otel-logs-based-file-upload-app/README.md)** — OTLP file-upload
+- **[apps/jfr-otel-profiles-app/README.md](apps/jfr-otel-profiles-app/README.md)** — OTLP profiles signal
 
 ## Use Cases
 

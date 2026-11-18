@@ -127,9 +127,9 @@ Visualization Tools:
   analyze-snapshots.py     Size analysis
 
 Documentation:
-  VISUALIZATION-GUIDE.md           Complete guide
-  QUICKSTART-VISUALIZATION.md      Quick start
-  VISUALIZATION-SUMMARY.txt        This file
+  docs/visualization-guide.md           Complete guide
+  docs/quickstart-visualization.md      Quick start
+  docs/visualization-summary.md         This file
 
 
 READING A FLAME GRAPH
@@ -196,8 +196,8 @@ MORE INFORMATION
 ════════════════
 
 Full guides:
-  cat VISUALIZATION-GUIDE.md
-  cat QUICKSTART-VISUALIZATION.md
+  cat docs/visualization-guide.md
+  cat docs/quickstart-visualization.md
 
 JMC Download:
   https://jdk.java.net/jmc/

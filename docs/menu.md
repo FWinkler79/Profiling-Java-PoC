@@ -354,6 +354,6 @@ mvn clean install
 
 ## See Also
 
-- [README.md](README.md) - Main project documentation
-- [PROJECT-OVERVIEW.md](PROJECT-OVERVIEW.md) - Detailed comparison of approaches
+- [README.md](../README.md) - Main project documentation
+- [docs/project-overview.md](project-overview.md) - Detailed comparison of approaches
 - Individual app READMEs for detailed configuration

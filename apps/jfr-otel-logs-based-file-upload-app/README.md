@@ -254,7 +254,7 @@ Look for `total_exports` incrementing. If it stays at 0, check application logs 
 
 - [docker/README.md](docker/README.md) — Collector setup and the SAP Cloud Logging failure in detail
 - [Main Project README](../../README.md)
-- [PROJECT-OVERVIEW.md](../../PROJECT-OVERVIEW.md)
+- [docs/project-overview.md](../../docs/project-overview.md)
 - [jfr-otel-logs-app](../jfr-otel-logs-app/README.md) — The correct OTel Profiles approach
 - [OpenTelemetry Profiles Specification](https://opentelemetry.io/docs/specs/otel/profiles/)
 
